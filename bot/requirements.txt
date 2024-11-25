@@ -1,0 +1,23 @@
+aiogram
+environs~=9.0
+requests~=2.31.0
+redis
+betterlogging~=0.2.1
+aiohttp~=3.9.1
+xlsxwriter~=3.1.9
+uvicorn
+
+# # For enabling api:
+# backoff
+# ujson
+# yarl
+
+# # For PostgreSQL sqlalchemy + alembic:
+# sqlalchemy~=2.0
+# alembic~=1.0
+asyncpg
+
+
+fastapi~=0.109.0
+starlette~=0.35.1
+yarl~=1.9.4
