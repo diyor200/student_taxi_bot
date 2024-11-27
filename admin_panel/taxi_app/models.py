@@ -3,9 +3,11 @@ from django.db import models
 # users model
 class User(models.Model):
     username = models.CharField(max_length=255)
-    telegram_id = models.BigIntegerField()
+    telegram_id = models.BigIntegerField(unique=True)
     name = models.CharField(max_length=300)
-    phone = models.CharField(max_length=100)
+    surname = models.CharField(max_length=300)
+    phone = models.CharField(max_length=100, unique=True)
+    type = models.CharField(max_length=1, default='u')  # u - user, d - driver
     status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
