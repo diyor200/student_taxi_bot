@@ -6,151 +6,127 @@ from aiogram import types
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
+from aiogram.types import ReplyKeyboardRemove
 
-from tgbot.misc.states import Subject
-from tgbot.loader import db, config
-from tgbot.keyboards.reply import markup, ru_subjects_list, uz_subjects_list, builder, adminKeyboards
-from tgbot.services.broadcaster import broadcast
+from ..consts.consts import DRIVER_TYPE
+from ..misc.states import DriverRegistration
+from ..loader import db, config
+from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard
+from ..services.broadcaster import broadcast
 
-subject_router = Router()
+driver_router = Router()
 
-@subject_router.message(F.text == '📝 Registratsiya')
-async def begin_Subject(message: types.Message, state: FSMContext):
+
+# register
+@driver_router.message(F.text == "🚖 Haydovchi")
+async def begin_registration(message: types.Message, state: FSMContext):
     await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
-    await state.set_state(Subject.Name)
+    await state.set_state(DriverRegistration.Name)
 
 
-@subject_router.message(Subject.Name)
+@driver_router.message(DriverRegistration.Name)
 async def get_name(message: types.Message, state: FSMContext):
     if message.content_type != ContentType.TEXT:
         await message.answer("❌ Faqat text ko'rinishida kiriting. Ismingizni qaytadan kiriting:")
-        return await state.set_state(Subject.Name)
+        return await state.set_state(DriverRegistration.Name)
 
     name = message.text
     await state.update_data({
         "name": name
     })
+
     await message.answer("Familyangizni kiriting:")
-    await state.set_state(Subject.Surname)
+    await state.set_state(DriverRegistration.Surname)
 
 
-@subject_router.message(Subject.Surname)
-async def get_phone(message: types.Message, state: FSMContext):
+@driver_router.message(DriverRegistration.Surname)
+async def get_name(message: types.Message, state: FSMContext):
     if message.content_type != ContentType.TEXT:
         await message.answer("❌ Faqat text ko'rinishida kiriting. Familyangizni qaytadan kiriting:")
-        return await state.set_state(Subject.Surname)
+        return await state.set_state(DriverRegistration.Name)
 
+    surname = message.text
     await state.update_data({
-        "surname": message.text
+        "surname": surname
     })
-    await message.answer("Yoshingizni kiriting:")
-    await state.set_state(Subject.Age)
+    await message.answer("Telefon raqamingizni kiriting:\nMisol: <b>+998901234567</b>",
+                         reply_markup=phone_button())
+    await state.set_state(DriverRegistration.Phone)
 
 
-@subject_router.message(Subject.Age)
+@driver_router.message(DriverRegistration.Phone)
 async def get_name(message: types.Message, state: FSMContext):
-    if message.content_type != ContentType.TEXT:
-        await message.answer("❌ Noto'g'ri. Yoshingizni qaytadan kiriting:\nMisol: <b>22</b>")
-        return await state.set_state(Subject.Age)
+    phone = message.text
 
-    try:
-        await state.update_data({
-            "age": int(message.text)
-        })
-    except Exception as ex:
-        logging.warning(ex)
-        await message.answer("❌ Noto'g'ri. Yoshingizni qaytadan kiriting:\nMisol:  <b>22</b>")
-        return await state.set_state(Subject.Age)
-
-    await message.answer("Manzilingizni kiriting:")
-    await state.set_state(Subject.Address)
-
-
-@subject_router.message(Subject.Address)
-async def get_name(message: types.Message, state: FSMContext):
-    if message.content_type != ContentType.TEXT:
-        await message.answer("❌ Faqat text ko'rinishida kiriting. Manzilingizni qaytadan kiriting:")
-        return await state.set_state(Subject.Address)
-
-    await state.update_data({
-        "address": message.text
-    })
-    await message.answer("Telefon raqamingizni kiriting:\nMisol: +998901234567")
-    await state.set_state(Subject.Phone)
-
-
-@subject_router.message(Subject.Phone)
-async def f(message: types.Message, state: FSMContext):
-    if message.content_type != ContentType.TEXT:
-        await message.answer("❌ Faqat text ko'rinishida kiriting. Telefon raqamingizni qaytadan kiriting:")
-        return await state.set_state(Subject.Surname)
-
-    if not bool(re.match("^\+998\d{9}$", message.text)):
-        await message.answer("❌ Telefon raqam noto'g'ri kiritildi. Iltimos, qaytadan kiriting:\nMisol: +998901234567")
-        return await state.set_state(Subject.Phone)
-
-    await state.update_data({
-        "phone": message.text
-    })
-
-    await message.answer("Qaysi tilda bo'lishini istaysiz:", reply_markup=markup)
-    await state.set_state(Subject.Language)
-
-
-@subject_router.message(Subject.Language)
-async def f(message: types.Message, state: FSMContext):
-    if message.content_type != ContentType.TEXT:
-        await message.answer("❌ Faqat text ko'rinishida kiriting. Tugmalardan foydalaning:")
-        return await state.set_state(Subject.Language)
-    if message.text not in ("🇺🇿 o'zbekcha", "🇷🇺 ruscha"):
-        await message.answer("❌ Noto'g'ri. Iltimos, Tugmalardan foydalaning:")
-        return await state.set_state(Subject.Language)
-
-    await state.update_data({
-        "lang": message.text,
-    })
-
-    if message.text == "🇷🇺 ruscha":
-        await message.answer("Qaysi fanga qatnashmoqchisiz:", reply_markup=ru_subjects_list())
+    if message.content_type == ContentType.TEXT or message.content_type == ContentType.CONTACT:
+        if message.content_type == ContentType.CONTACT:
+            phone = message.contact.phone_number
     else:
-        await message.answer("Qaysi fanga qatnashmoqchisiz:", reply_markup=uz_subjects_list())
-    return await state.set_state(Subject.SubjectChoice)
+        await message.answer("❌ Noto'g'ri format. Qaytadan kiriting:\nTugmadan foydalaning")
+        return await state.set_state(DriverRegistration.Phone)
 
-@subject_router.message(Subject.SubjectChoice)
-async def f(message: types.Message, state: FSMContext):
+    await state.update_data({
+        "phone": phone
+    })
+
+    await message.answer(text="Mashina modelini kiriting:\nMisol: <b>Gentra</b>", reply_markup=ReplyKeyboardRemove())
+    await state.set_state(DriverRegistration.CarModel)
+
+
+@driver_router.message(DriverRegistration.CarModel)
+async def get_name(message: types.Message, state: FSMContext):
     if message.content_type != ContentType.TEXT:
-        await message.answer("❌ Faqat text ko'rinishida kiriting. Tugmalardan foydalaning:")
-        return await state.set_state(Subject.SubjectChoice)
-    if message.text not in ("Matematika", "Fizika", "Ingliz tili", "Kores tili", "Biologiya", "Kimyo"):
-        await message.answer("❌ Noto'g'ri. Iltimos, Tugmalardan foydalaning:")
-        return await state.set_state(Subject.SubjectChoice)
-    
+        await message.answer("❌ Faqat text ko'rinishida kiriting. Ismingizni qaytadan kiriting:")
+        return await state.set_state(DriverRegistration.CarModel)
+
+    model = message.text
+    await state.update_data({
+        "model": model
+    })
+
+    await message.answer("Raqamini kiriting:\nMisol: <b>01 Z 001 ZZ</b>")
+    await state.set_state(DriverRegistration.CarNumber)
+
+
+@driver_router.message(DriverRegistration.CarNumber)
+async def get_name(message: types.Message, state: FSMContext):
+    if message.content_type != ContentType.TEXT:
+        await message.answer("❌ Faqat text ko'rinishida kiriting. Ismingizni qaytadan kiriting:")
+        return await state.set_state(DriverRegistration.CarNumber)
+
     data = await state.get_data()
-    builder.adjust(1, 2)
+    name = data.get('name')
+    surname = data.get("surname")
+    phone = data.get("phone")
+    car_model = data.get("model")
+    only_card_add = data.get("only_card_add")
+    car_number = message.text
+
+    if only_card_add:
+        try:
+            user = await db.get_user_by_telegram_id(telegram_id=message.from_user.id)
+            await db.add_car(user_id=user['id'], car_model=car_model, car_number=car_number)
+            await db.update_user_type(telegram_id=user['telegram_id'], user_type=DRIVER_TYPE)
+        except Exception as e:
+            logging.exception(e)
+            await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi", reply_markup=user_main_menu_keyboard())
+            return
+    else:
+        try:
+            user_id = await db.add_user(username=message.from_user.username, name=name, surname=surname, phone=phone,
+                                        telegram_id=message.from_user.id, user_type=DRIVER_TYPE)
+            await db.add_car(user_id=user_id[0], car_model=car_model, car_number=car_number)
+        except Exception as e:
+            logging.exception(e)
+            await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi",
+                                 reply_markup=types.ReplyKeyboardRemove())
+            return
+
+    await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=driver_main_menu_keyboard())
     await state.clear()
-    text = (f"🗣Yangi foydalanuvchi ro'yhatdan o'tdi:\n"+
-            f"<b>Ismi:</b> {data['name']}\n"+
-            f"<b>Familiya:</b> {data['surname']}\n"+
-            f"<b>Yosh:</b> {data['age']}\n"+
-            f"<b>Telefon:</b> {data['phone']}\n"+
-            f"<b>Manzil:</b> {data['address']}\n"+
-            f"<b>Til:</b> {data['lang']}\n"+
-            f"<b>Fan:</b> {message.text}")
-    if message.from_user.id in config.tg_bot.admin_ids:
-        markup = adminKeyboards()
-    else :
-        markup = builder.as_markup(resize_keyboard=True)
-    try:
-        await db.add_subject_registration_data(name=data["name"], surname=data["surname"], age=data["age"], lang=data['lang'],
-                                       phone=data["phone"], address=data["address"], subject=message.text)
-        await broadcast(message.bot, config.tg_bot.admin_ids, text)
-        await message.answer("✅ Siz ro'yhatdan muvaffaqiyatli o'tdingiz. Tez orada sizga aloqaga chiqamiz.",
-                             reply_markup=markup)
-    except asyncpg.exceptions.UniqueViolationError:
-        await message.answer("❌ Bu telefon raqami bilan allaqachon ro'yhatdan o'tilgan.",
-                             reply_markup=markup)
-    except Exception as ex:
-        logging.warning(ex)
-        await message.answer("❌ Ro'yhatdan o'tishda muammo yuzaga keldi.\nNoqulayliklar uchun uzur so'raymiz.",
-                             reply_markup=markup)
-    
+
+
+@driver_router.message(F.text == "🚕 Marshrut yaratish")
+async def begin_registration(message: types.Message, state: FSMContext):
+    await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(DriverRegistration.Name)

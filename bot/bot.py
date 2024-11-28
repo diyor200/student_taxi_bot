@@ -5,11 +5,12 @@ import aiohttp
 import betterlogging as bl
 import fastapi
 import json
+
+from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram import Dispatcher, Bot, types
-from tgbot.keyboards.reply import adminKeyboards, ru_subjects_list, uz_subjects_list
 from pydantic import BaseModel
 
 from tgbot.config import load_config, Config
@@ -24,12 +25,9 @@ from fastapi import FastAPI
 
 async def on_startup(bot: Bot, admin_ids: list[int]):
     try:
-        # await db.create()
-        # await db.create_table_users()
-        # await db.create_table_registration()
-        # await db.create_table_subject_registration()
-        print("test")
-    except:
+        await db.create()
+    except Exception as e:
+        logging.error(e)
         await broadcaster.broadcast(bot, admin_ids, "can't create tables. Program is stopping.....")
         logging.error("can't create tables. Program is stopping.....")
         sys.exit(1)
@@ -37,7 +35,7 @@ async def on_startup(bot: Bot, admin_ids: list[int]):
     await broadcaster.broadcast(bot, admin_ids, "Bot ishga tushdi")
 
 
-def register_global_middlewares(dp: Dispatcher, cfg: Config, session_pool=None):
+def register_global_middlewares(dp: Dispatcher, cfg: Config):
     middleware_types = [
         # CheckSubscription(config.tg_bot.channels[0]),
         ConfigMiddleware(cfg),
@@ -105,11 +103,7 @@ def get_storage(config):
     else:
         return MemoryStorage()
 
-
-
-bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
-
-app = FastAPI()
+# app = FastAPI()
 setup_logging()
 storage = get_storage(config)
 dp = Dispatcher(storage=storage)
@@ -117,89 +111,90 @@ dp.include_routers(*routers_list)
 register_global_middlewares(dp, config)
 
 
-@app.on_event("startup")
-async def start_up():
-    if await bot.get_webhook_info():
-        await bot.delete_webhook()
-
-    await on_startup(bot, config.tg_bot.admin_ids)
-
-
-class Item(BaseModel):
-    teacher: str
-    image_url: str
-    text: str
-
-
-class RekData:
-    teacher: str
-    image_url: str
-    text: str
-    create_markup: bool
-
-
-@app.post("/test")
-async def process(item: Item):
-    rek = RekData()
-    rek.teacher = item.teacher
-    rek.image_url = item.image_url
-    rek.text = item.text
-    rek.create_markup = False
-
-    await send_homework_to_users(config.tg_bot.admin_ids, rek)
-    return {"Hello": "World"}
-
-
-async def send_homework_to_users(users: list[int], item: RekData):
-    count = 0
-    text = f"<b>Yangi uy vazifasi</b>\n<b>Sana:</b>\t<code>{datetime.now().date()}</code>\n<b>Ustoz:</b>\t{item.teacher}\n<b>Text</b>:\t{item.text}"
-
-    if item.create_markup:
-        markup = uz_subjects_list()
-    else:
-        markup = None
-
-    try:
-        for user_id in users:
-            if await bot.send_photo(
-                    chat_id=user_id,
-                    photo=item.image_url,
-                    caption=text,
-                    reply_markup=markup,
-            ):
-                count += 1
-            await asyncio.sleep(
-                0.05
-            )  # 20 messages per second (Limit: 30 messages per second)
-    finally:
-        logging.info(f"{count} messages successful sent.")
-
-    return count
-
-
-@app.post("/webhook")
-async def process_update(update: dict):
-    telegram_update = types.Update(**update)
-    await dp._process_update(bot, telegram_update)
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    await broadcaster.broadcast(bot, config.tg_bot.admin_ids, "bot o'chdi")
-    await bot.session.close()
-    return
+# @app.on_event("startup")
+# async def start_up():
+#     if await bot.get_webhook_info():
+#         await bot.delete_webhook()
+#
+#     await on_startup(bot, config.tg_bot.admin_ids)
+#
+#
+# class Item(BaseModel):
+#     teacher: str
+#     image_url: str
+#     text: str
+#
+#
+# class RekData:
+#     teacher: str
+#     image_url: str
+#     text: str
+#     create_markup: bool
+#
+#
+# @app.post("/test")
+# async def process(item: Item):
+#     rek = RekData()
+#     rek.teacher = item.teacher
+#     rek.image_url = item.image_url
+#     rek.text = item.text
+#     rek.create_markup = False
+#
+#     await send_homework_to_users(config.tg_bot.admin_ids, rek)
+#     return {"Hello": "World"}
+#
+#
+# async def send_homework_to_users(users: list[int], item: RekData):
+#     count = 0
+#     text = f"<b>Yangi uy vazifasi</b>\n<b>Sana:</b>\t<code>{datetime.now().date()}</code>\n<b>Ustoz:</b>\t{item.teacher}\n<b>Text</b>:\t{item.text}"
+#
+#     if item.create_markup:
+#         markup = uz_subjects_list()
+#     else:
+#         markup = None
+#
+#     try:
+#         for user_id in users:
+#             if await bot.send_photo(
+#                     chat_id=user_id,
+#                     photo=item.image_url,
+#                     caption=text,
+#                     reply_markup=markup,
+#             ):
+#                 count += 1
+#             await asyncio.sleep(
+#                 0.05
+#             )  # 20 messages per second (Limit: 30 messages per second)
+#     finally:
+#         logging.info(f"{count} messages successful sent.")
+#
+#     return count
+#
+#
+# @app.post("/webhook")
+# async def process_update(update: dict):
+#     telegram_update = types.Update(**update)
+#     await dp._process_update(bot, telegram_update)
+#
+#
+# @app.on_event("shutdown")
+# async def shutdown():
+#     await broadcaster.broadcast(bot, config.tg_bot.admin_ids, "bot o'chdi")
+#     await bot.session.close()
+#     return
 
 
 async def main():
     # session = AiohttpSession(proxy="http://172.25.113.50:8085")
-    # bot = Bot(token=config.tg_bot.token, parse_mode="HTML", session=session)
+    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML')) #, session=session)
+    await on_startup(bot, config.tg_bot.admin_ids)
     if await bot.get_webhook_info():
         await bot.delete_webhook()
 
     await dp.start_polling(bot)
 
-# if __name__ == "__main__":
-#     try:
-#         asyncio.run(main())
-#     except (KeyboardInterrupt, SystemExit):
-#         logging.error("Бот був вимкнений!")
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logging.error("Бот був вимкнений!")

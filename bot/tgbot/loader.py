@@ -1,5 +1,5 @@
-from tgbot.config import load_config
-from infrastructure.database.postgresql import Database
+from .config import load_config
+from .misc.db_api.postgres import Database
 
 
 db = Database()

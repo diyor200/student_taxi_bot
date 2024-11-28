@@ -1,40 +1,37 @@
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-builder = ReplyKeyboardBuilder()
-builder.add(KeyboardButton(text="📝 Konkursda qatnashish"))
-builder.add(KeyboardButton(text="📝 Registratsiya"))
 
-def adminKeyboards():
+def start_keyboard():
     markup = ReplyKeyboardMarkup(keyboard=[[
-        KeyboardButton(text="📝 Konkursda qatnashish"),
-        KeyboardButton(text="📝 Registratsiya")],
-    [KeyboardButton(text="Konkurs ishtirokchilari")],
-    [KeyboardButton(text="Ro'yhatdan o'tganlar")]],
+        KeyboardButton(text="👨 Yo'lovchi"),
+        KeyboardButton(text="🚖 Haydovchi")
+    ]],
+        resize_keyboard=True)
+    return markup
+
+
+def phone_button() -> ReplyKeyboardMarkup:
+    markup = ReplyKeyboardMarkup(keyboard=[[
+        KeyboardButton(text="Telefon raqam yuborish", request_contact=True)]],
       resize_keyboard=True)
     return markup
 
 
-markup = ReplyKeyboardMarkup(keyboard=[[
-    KeyboardButton(text="🇺🇿 o'zbekcha"),
-    KeyboardButton(text="🇷🇺 ruscha"),
-]], resize_keyboard=True)
-
-
-def uz_subjects_list() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(keyboard=[[
-        KeyboardButton(text="Matematika"),
-        KeyboardButton(text="Fizika")],
-        [KeyboardButton(text="Ingliz tili"),
-        KeyboardButton(text="Kores tili")],
-        [KeyboardButton(text="Biologiya")],
-        [KeyboardButton(text="Kimyo"),
-    ]],resize_keyboard=True)
-
-
-def ru_subjects_list():
+def user_main_menu_keyboard() -> ReplyKeyboardMarkup:
     markup = ReplyKeyboardMarkup(keyboard=[[
-        KeyboardButton(text="Biologiya"),
-        KeyboardButton(text="Kimyo"),
-    ]], resize_keyboard=True)
+        KeyboardButton(text="Marshrutlar"),
+        KeyboardButton(text="👤 Shaxsiy kabinet")],
+        [KeyboardButton(text="🚖 Mashina qo'shish")]
+    ], resize_keyboard=True)
+
+    return markup
+
+
+def driver_main_menu_keyboard() -> ReplyKeyboardMarkup:
+    markup = ReplyKeyboardMarkup(keyboard=[[
+        KeyboardButton(text="Marshrutlar"),
+        KeyboardButton(text="👤 Shaxsiy kabinet")],
+        [KeyboardButton(text="🚕 Marshrut yaratish")]
+    ], resize_keyboard=True)
+
     return markup
