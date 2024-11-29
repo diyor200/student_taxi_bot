@@ -102,3 +102,11 @@ class Database:
                  values($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   start_time, seats, price, comment, fetchrow=True)
+
+    # user routes
+    async def add_user_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, start_time,
+                        seats, price, comment):
+        sql = """insert into user_directions(user_id, direction_id, created_at, updated_at)
+                    values ($1, $1, now(), now()) returning id;"""
+        return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
+                                  start_time, seats, price, comment, fetchrow=True)

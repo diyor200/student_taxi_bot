@@ -7,7 +7,7 @@ from aiogram.enums.content_type import ContentType
 
 from ..misc.states import Registration, DriverRegistration
 from ..loader import db, config
-from ..keyboards.reply import phone_button, user_main_menu_keyboard
+from ..keyboards.reply import phone_button, user_main_menu_keyboard, start_keyboard
 from ..services.broadcaster import broadcast
 from ..config import load_config
 from ..consts.consts import USER_TYPE, PASSENGER, ADD_CAR
@@ -64,13 +64,18 @@ async def get_name(message: types.Message, state: FSMContext):
     data = await state.get_data()
     name = data["name"]
     surname = data["surname"]
+    username = message.from_user.username
+    if username is None:
+        username = str(message.from_user.id)
+
 
     try:
-        await db.add_user(username=message.from_user.username, name=name, surname=surname, phone=phone,
+        await db.add_user(username=username, name=name, surname=surname, phone=phone,
                           telegram_id=message.from_user.id, user_type=USER_TYPE)
     except Exception as e:
         logging.exception(e)
-        await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi", reply_markup=types.ReplyKeyboardRemove())
+        await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi", reply_markup=start_keyboard())
+        await state.clear()
         return
 
     await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=user_main_menu_keyboard())

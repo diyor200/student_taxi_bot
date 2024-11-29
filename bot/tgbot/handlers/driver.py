@@ -14,7 +14,7 @@ from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE
 from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id
 from ..misc.states import DriverRegistration, RouteState
 from ..loader import db, config
-from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard
+from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard, start_keyboard
 from ..services.broadcaster import broadcast
 
 driver_router = Router()
@@ -104,6 +104,9 @@ async def get_name(message: types.Message, state: FSMContext):
     car_model = data.get("model")
     only_card_add = data.get("only_card_add")
     car_number = message.text
+    username = message.from_user.username
+    if username is None:
+        username = str(message.from_user.id)
 
     if only_card_add:
         try:
@@ -112,17 +115,19 @@ async def get_name(message: types.Message, state: FSMContext):
             await db.update_user_type(telegram_id=user['telegram_id'], user_type=DRIVER_TYPE)
         except Exception as e:
             logging.exception(e)
-            await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi", reply_markup=user_main_menu_keyboard())
+            await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi", reply_markup=start_keyboard())
+            await state.clear()
             return
     else:
         try:
-            user_id = await db.add_user(username=message.from_user.username, name=name, surname=surname, phone=phone,
+            user_id = await db.add_user(username=username, name=name, surname=surname, phone=phone,
                                         telegram_id=message.from_user.id, user_type=DRIVER_TYPE)
             await db.add_car(user_id=user_id[0], car_model=car_model, car_number=car_number)
         except Exception as e:
             logging.exception(e)
             await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi",
-                                 reply_markup=types.ReplyKeyboardRemove())
+                                 reply_markup=start_keyboard())
+            await state.clear()
             return
 
     await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=driver_main_menu_keyboard())
