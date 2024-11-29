@@ -133,7 +133,23 @@ def get_district_name_by_index(region_id, index) -> str:
     return ""
 
 
-CREATE_ROUTE = "🚕 Marshrut yaratish"
+CREATE_ROUTE = "➕ Marshrut yaratish"
 PASSENGER = "👨 Yo'lovchi"
 DRIVER = "🚖 Haydovchi"
 ADD_CAR = "🚖 Mashina qo'shish"
+ROUTES = "🚕 Marshrutlar"
+
+NEXT_TEXT = "Keyingisi ➡️"
+CANCEL_TEXT = "Bekor qilish ✖️"
+
+PERSONAL_ACCOUNT_TEXT = '👤 Shaxsiy kabinet'
+PERSONAL_ACCOUNT_INFO_FORM = "Ism: {0}\nFamilya: {1}\nTelefon raqam: {2}\nStatus: {3}"
+PERSONAL_ACCOUNT_CAR_INFO_FORM = "\n\nMashina haqida ma'lumot\nModel: {0}\nRaqam: {1}"
+
+SEND_MESSAGE_VIA_TELERGAM_TEXT = "📤 Haydovchiga yozish"
+
+SEND_ROUTE_FORM = ("Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\nIzoh: {3}\n\nHaydovchi: {4}\nMashina rusumi: {5}\n"
+                   "Mashina raqami: {6}\nHaydovchi telefon raqami: {7}")
+
+
+

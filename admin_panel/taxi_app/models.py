@@ -1,5 +1,6 @@
 from django.db import models
 
+
 # users model
 class User(models.Model):
     username = models.CharField(max_length=255)
@@ -19,6 +20,7 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
+
 # cars model
 class Car(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -34,6 +36,7 @@ class Car(models.Model):
     def __str__(self):
         return self.model
 
+
 # car image model
 class CarImage(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE)
@@ -45,7 +48,7 @@ class CarImage(models.Model):
     class Meta:
         ordering = ['-created_at']
         db_table = 'car_images'
-    
+
     def __str__(self):
         return self.car.model
 
@@ -76,6 +79,7 @@ class Direction(models.Model):
     seats = models.SmallIntegerField()
     price = models.BigIntegerField()
     comment = models.CharField(max_length=500, default="")
+    status = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

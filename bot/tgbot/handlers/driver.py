@@ -139,6 +139,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
     await message.answer("Viloyatni tanlang:", reply_markup=get_regions_inline_keyboard())
     await state.set_state(RouteState.FromRegion)
 
+
 @driver_router.callback_query(RouteState.FromRegion)
 async def begin_registration(call: types.CallbackQuery, state: FSMContext):
     region_id = int(call.data)
@@ -187,6 +188,7 @@ async def begin_registration(call: types.CallbackQuery, state: FSMContext):
                               reply_markup=ReplyKeyboardRemove())
     await state.set_state(RouteState.StartTime)
 
+
 @driver_router.message(RouteState.StartTime)
 async def begin_registration(message: types.Message, state: FSMContext):
     start_time = message.text
@@ -196,7 +198,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
     })
 
     await message.answer("Bo'sh joylar soni(faqat son kiriting):\nMisol: <b>4</b>",
-                              reply_markup=ReplyKeyboardRemove())
+                         reply_markup=ReplyKeyboardRemove())
     await state.set_state(RouteState.Seats)
 
 
@@ -209,7 +211,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
     })
 
     await message.answer("Narxini kiriting(faqat son):\nMisol: <b>20000</b>",
-                              reply_markup=ReplyKeyboardRemove())
+                         reply_markup=ReplyKeyboardRemove())
     await state.set_state(RouteState.Price)
 
 
@@ -223,13 +225,12 @@ async def begin_registration(message: types.Message, state: FSMContext):
 
     await message.answer("Izoh kiriting:\nMisol: <b>Andijon shahar Boburshox ko'chasi, Hamkorbank "
                          "bosh office oldidan yuramiz</b>",
-                              reply_markup=ReplyKeyboardRemove())
+                         reply_markup=ReplyKeyboardRemove())
     await state.set_state(RouteState.Comment)
 
 
 @driver_router.message(RouteState.Comment)
 async def begin_registration(message: types.Message, state: FSMContext):
-
     data = await state.get_data()
     from_region_id = int(data["from_region_id"])
     from_district_id = int(data["from_district_id"])
@@ -240,13 +241,12 @@ async def begin_registration(message: types.Message, state: FSMContext):
     price = int(data["price"])
     comment = message.text
 
-    print(f"{from_region_id=}, {from_district_id=}, {to_region_id=}, {to_district_id=}, {start_time=}")
-
     user = await db.get_user_by_telegram_id(message.from_user.id)
     await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
-                       to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time, seats=seats,
+                       to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time,
+                       seats=seats,
                        price=price, comment=comment)
 
     await message.answer("Muvaffaqiyatli yaratildi!",
-                              reply_markup=ReplyKeyboardRemove())
+                         reply_markup=driver_main_menu_keyboard())
     await state.set_state(RouteState.Price)

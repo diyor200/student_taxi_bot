@@ -60,29 +60,13 @@ class Database:
                     values ($1, $2, $3, $4, $5, $6, true, now(), now()) returning id;"""
         return await self.execute(sql, username, telegram_id, name, surname, phone, user_type, fetchrow=True)
 
-    async def select_all_users(self):
-        sql = "SELECT * FROM users"
-        return await self.execute(sql, fetch=True)
-
     async def get_user_by_telegram_id(self, telegram_id):
         sql = "SELECT * FROM users WHERE telegram_id = $1"
         return await self.execute(sql, telegram_id, fetchrow=True)
 
-    async def select_user(self, **kwargs):
-        sql = "SELECT * FROM Users WHERE "
-        sql, parameters = self.format_args(sql, parameters=kwargs)
-        return await self.execute(sql, *parameters, fetchrow=True)
-
-    async def count_users(self):
-        sql = "SELECT COUNT(*) FROM Users"
-        return await self.execute(sql, fetchval=True)
-
-    async def update_user_username(self, username, telegram_id):
-        sql = "UPDATE Users SET username=$1 WHERE telegram_id=$2"
-        return await self.execute(sql, username, telegram_id, execute=True)
-
-    async def delete_users(self):
-        await self.execute("DELETE FROM Users WHERE TRUE", execute=True)
+    async def get_user_by_id(self, id):
+        sql = "select * from users where id = $1"
+        return await self.execute(sql, id, fetchrow=True)
 
     async def update_user_type(self, telegram_id, user_type):
         sql = "UPDATE Users SET type=$1 WHERE telegram_id=$2"
@@ -94,19 +78,34 @@ class Database:
                     values ($1, $2, $3, now(), now()) returning id;"""
         return await self.execute(sql, user_id, car_model, car_number, fetchrow=True)
 
+    async def get_car_by_driver_id(self, driver_id):
+        sql = "select * from cars where user_id = $1 limit 1"
+        return await self.execute(sql, driver_id, fetchrow=True)
+
     # routes
     async def add_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, start_time,
                         seats, price, comment):
         sql = """insert into directions(driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
-                    start_time, seats, price, comment, created_at, updated_at)
-                 values($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now()) returning id;"""
+                    start_time, seats, price, comment, status, created_at, updated_at)
+                 values($1, $2, $3, $4, $5, $6, $7, $8, $9, true, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   start_time, seats, price, comment, fetchrow=True)
 
+    async def get_all_routes(self):
+        sql = "SELECT * FROM directions where status = true;"
+        return await self.execute(sql, fetch=True)
+
+    async def get_route(self, from_region_id, from_district_id, to_region_id, to_district_id):
+        sql = """select * from directions where from_region_id=$1
+                           and from_district_id=$2 and to_region_id=$3 and to_district_id=$4 and status = true;"""
+        return await self.execute(sql, from_region_id, from_district_id, to_region_id, to_district_id, fetch=True)
+
     # user routes
-    async def add_user_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, start_time,
-                        seats, price, comment):
+    async def add_user_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
+                             start_time, seats, price, comment):
         sql = """insert into user_directions(user_id, direction_id, created_at, updated_at)
                     values ($1, $1, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   start_time, seats, price, comment, fetchrow=True)
+
+

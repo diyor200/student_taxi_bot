@@ -24,3 +24,11 @@ class RouteState(StatesGroup):
     Seats = State()
     Price = State()
     Comment = State()
+
+
+class RoutesState(StatesGroup):
+    FromRegion = State()
+    FromDistrict = State()
+    ToRegion = State()
+    ToDistrict = State()
+    Next = State()

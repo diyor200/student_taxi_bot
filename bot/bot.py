@@ -185,8 +185,8 @@ register_global_middlewares(dp, config)
 
 
 async def main():
-    session = AiohttpSession(proxy="http://172.25.113.50:8085")
-    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'), session=session)
+    # session = AiohttpSession(proxy="http://172.25.113.50:8085")
+    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))#, session=session)
     await on_startup(bot, config.tg_bot.admin_ids)
     if await bot.get_webhook_info():
         await bot.delete_webhook()

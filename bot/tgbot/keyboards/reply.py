@@ -1,5 +1,7 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
+from ..consts.consts import ROUTES, NEXT_TEXT, CANCEL_TEXT
+
 
 def start_keyboard():
     markup = ReplyKeyboardMarkup(keyboard=[[
@@ -19,7 +21,7 @@ def phone_button() -> ReplyKeyboardMarkup:
 
 def user_main_menu_keyboard() -> ReplyKeyboardMarkup:
     markup = ReplyKeyboardMarkup(keyboard=[[
-        KeyboardButton(text="Marshrutlar"),
+        KeyboardButton(text=ROUTES),
         KeyboardButton(text="👤 Shaxsiy kabinet")],
         [KeyboardButton(text="🚖 Mashina qo'shish")]
     ], resize_keyboard=True)
@@ -29,9 +31,19 @@ def user_main_menu_keyboard() -> ReplyKeyboardMarkup:
 
 def driver_main_menu_keyboard() -> ReplyKeyboardMarkup:
     markup = ReplyKeyboardMarkup(keyboard=[[
-        KeyboardButton(text="Marshrutlar"),
+        KeyboardButton(text=ROUTES),
         KeyboardButton(text="👤 Shaxsiy kabinet")],
         [KeyboardButton(text="🚕 Marshrut yaratish")]
     ], resize_keyboard=True)
+
+    return markup
+
+
+def next_cancel_keyboard() -> ReplyKeyboardMarkup:
+    markup = ReplyKeyboardMarkup(keyboard=[[
+        KeyboardButton(text=NEXT_TEXT),
+        KeyboardButton(text=CANCEL_TEXT),
+    ]], resize_keyboard=True
+    )
 
     return markup
