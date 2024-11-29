@@ -68,12 +68,14 @@ class Rating(models.Model):
 # direction model
 class Direction(models.Model):
     driver = models.ForeignKey(User, on_delete=models.CASCADE)
-    from_place = models.CharField(max_length=300)
-    to_place = models.CharField(max_length=300)
+    from_region_id = models.SmallIntegerField(default=0)
+    from_district_id = models.SmallIntegerField(default=0)
+    to_region_id = models.SmallIntegerField(default=0)
+    to_district_id = models.SmallIntegerField(default=0)
     start_time = models.DateTimeField()
-    start_point = models.CharField(max_length=300)
     seats = models.SmallIntegerField()
     price = models.BigIntegerField()
+    comment = models.CharField(max_length=500, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -82,9 +84,7 @@ class Direction(models.Model):
         db_table = "directions"
 
     def __str__(self):
-        return f"{self.from_place} - {self.to_place})"
-
-        
+        return f"{self.from_region_id} - {self.to_region_id})"
 
 
 # user direction model

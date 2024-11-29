@@ -54,10 +54,10 @@ class DirectionAdmin(admin.ModelAdmin):
         return obj.driver.name if obj.driver else None
     get_direction_driver_name.short_description = 'driver'
 
-    list_display = ['start_time', 'from_place', 'to_place', 'start_point', 'price', 'seats' ,'get_direction_driver_name' ,'created_at',
-                    'updated_at']
-    ordering = ['from_place', 'price']
-    search_fields = ['from_place', 'to_place', 'start_point']
+    # list_display = ['start_time', 'from_place', 'to_place', 'comment', 'price', 'seats' ,'get_direction_driver_name' ,'created_at',
+    #                 'updated_at']
+    # ordering = ['from_place', 'price']
+    # search_fields = ['from_place', 'to_place']
     
 
 @admin.register(UserDirection)
