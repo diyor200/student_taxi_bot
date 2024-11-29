@@ -1,5 +1,7 @@
 import logging
 import re
+from datetime import datetime
+
 import asyncpg
 
 from aiogram import types
@@ -8,8 +10,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 from aiogram.types import ReplyKeyboardRemove
 
-from ..consts.consts import DRIVER_TYPE
-from ..misc.states import DriverRegistration
+from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE
+from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id
+from ..misc.states import DriverRegistration, RouteState
 from ..loader import db, config
 from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard
 from ..services.broadcaster import broadcast
@@ -18,7 +21,7 @@ driver_router = Router()
 
 
 # register
-@driver_router.message(F.text == "🚖 Haydovchi")
+@driver_router.message(F.text == DRIVER)
 async def begin_registration(message: types.Message, state: FSMContext):
     await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(DriverRegistration.Name)
@@ -126,7 +129,119 @@ async def get_name(message: types.Message, state: FSMContext):
     await state.clear()
 
 
-@driver_router.message(F.text == "🚕 Marshrut yaratish")
+@driver_router.message(F.text == CREATE_ROUTE)
 async def begin_registration(message: types.Message, state: FSMContext):
-    await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
-    await state.set_state(DriverRegistration.Name)
+    await message.answer("Viloyatni tanlang:", reply_markup=get_regions_inline_keyboard())
+    await state.set_state(RouteState.FromRegion)
+
+@driver_router.callback_query(RouteState.FromRegion)
+async def begin_registration(call: types.CallbackQuery, state: FSMContext):
+    region_id = int(call.data)
+
+    await state.update_data({
+        "from_region_id": region_id
+    })
+
+    await call.message.answer("Tumanni tanlang:", reply_markup=get_districts_by_region_id(region_id))
+    await state.set_state(RouteState.FromDistrict)
+
+
+@driver_router.callback_query(RouteState.FromDistrict)
+async def begin_registration(call: types.CallbackQuery, state: FSMContext):
+    district_id = int(call.data)
+
+    await state.update_data({
+        "from_district_id": district_id
+    })
+
+    await call.message.answer("Viloyatni tanlang:", reply_markup=get_regions_inline_keyboard())
+    await state.set_state(RouteState.ToRegion)
+
+
+@driver_router.callback_query(RouteState.ToRegion)
+async def begin_registration(call: types.CallbackQuery, state: FSMContext):
+    region_id = int(call.data)
+
+    await state.update_data({
+        "to_region_id": region_id
+    })
+
+    await call.message.answer("Tumanni tanlang:", reply_markup=get_districts_by_region_id(region_id))
+    await state.set_state(RouteState.ToDistrict)
+
+
+@driver_router.callback_query(RouteState.ToDistrict)
+async def begin_registration(call: types.CallbackQuery, state: FSMContext):
+    to_district_id = int(call.data)
+
+    await state.update_data({
+        "to_district_id": to_district_id
+    })
+
+    await call.message.answer("Yurish vaqtini kiriting:\nMisol: <b>31.12.2024 08:00</b>",
+                              reply_markup=ReplyKeyboardRemove())
+    await state.set_state(RouteState.StartTime)
+
+@driver_router.message(RouteState.StartTime)
+async def begin_registration(message: types.Message, state: FSMContext):
+    start_time = message.text
+
+    await state.update_data({
+        "start_time": start_time
+    })
+
+    await message.answer("Bo'sh joylar soni(faqat son kiriting):\nMisol: <b>4</b>",
+                              reply_markup=ReplyKeyboardRemove())
+    await state.set_state(RouteState.Seats)
+
+
+@driver_router.message(RouteState.Seats)
+async def begin_registration(message: types.Message, state: FSMContext):
+    seats = message.text
+
+    await state.update_data({
+        "seats": seats
+    })
+
+    await message.answer("Narxini kiriting(faqat son):\nMisol: <b>20000</b>",
+                              reply_markup=ReplyKeyboardRemove())
+    await state.set_state(RouteState.Price)
+
+
+@driver_router.message(RouteState.Price)
+async def begin_registration(message: types.Message, state: FSMContext):
+    price = message.text
+
+    await state.update_data({
+        "price": price
+    })
+
+    await message.answer("Izoh kiriting:\nMisol: <b>Andijon shahar Boburshox ko'chasi, Hamkorbank "
+                         "bosh office oldidan yuramiz</b>",
+                              reply_markup=ReplyKeyboardRemove())
+    await state.set_state(RouteState.Comment)
+
+
+@driver_router.message(RouteState.Comment)
+async def begin_registration(message: types.Message, state: FSMContext):
+
+    data = await state.get_data()
+    from_region_id = int(data["from_region_id"])
+    from_district_id = int(data["from_district_id"])
+    to_region_id = int(data["to_region_id"])
+    to_district_id = int(data["to_district_id"])
+    start_time = datetime.strptime(data["start_time"], "%d.%m.%Y %H:%M")
+    seats = int(data["seats"])
+    price = int(data["price"])
+    comment = message.text
+
+    print(f"{from_region_id=}, {from_district_id=}, {to_region_id=}, {to_district_id=}, {start_time=}")
+
+    user = await db.get_user_by_telegram_id(message.from_user.id)
+    await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
+                       to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time, seats=seats,
+                       price=price, comment=comment)
+
+    await message.answer("Muvaffaqiyatli yaratildi!",
+                              reply_markup=ReplyKeyboardRemove())
+    await state.set_state(RouteState.Price)

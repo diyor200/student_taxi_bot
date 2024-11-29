@@ -7,16 +7,16 @@ from aiogram.enums.content_type import ContentType
 
 from ..misc.states import Registration, DriverRegistration
 from ..loader import db, config
-from ..keyboards.reply import phone_button
+from ..keyboards.reply import phone_button, user_main_menu_keyboard
 from ..services.broadcaster import broadcast
 from ..config import load_config
-from ..consts.consts import USER_TYPE
+from ..consts.consts import USER_TYPE, PASSENGER, ADD_CAR
 
 user_router = Router()
 
 
 # register
-@user_router.message(F.text == "👨 Yo'lovchi")
+@user_router.message(F.text == PASSENGER)
 async def begin_registration(message: types.Message, state: FSMContext):
     await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
     await state.set_state(Registration.Name)
@@ -73,11 +73,11 @@ async def get_name(message: types.Message, state: FSMContext):
         await message.answer(text="Ro'yhatdan o'tishda muammo yuzaga keldi", reply_markup=types.ReplyKeyboardRemove())
         return
 
-    await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=user_main_menu_keyboard())
     await state.clear()
 
 
-@user_router.message(F.text == "🚖 Mashina qo'shish")
+@user_router.message(F.text == ADD_CAR)
 async def add_car(message: types.Message, state: FSMContext):
     await message.answer("Mashina modelini kiriting:", reply_markup=types.ReplyKeyboardRemove())
 

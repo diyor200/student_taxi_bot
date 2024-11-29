@@ -2,8 +2,7 @@ USER_TYPE = 'u'
 DRIVER_TYPE = 'd'
 
 regions = [
-    {
-        "id": 1,
+    {   "id": 1,
         "name": "Qoraqalpog‘iston Respublikasi",
         "districts": ['Amudaryo tumani', 'Beruniy tumani', 'Kegayli tumani', 'Qonliko‘l tumani', 'Qorao‘zak tumani',
                       'Qo‘ng‘irot tumani', 'Mo‘ynoq tumani', 'Nukus tumani', 'Nukus shahri', 'Taxtako‘pir tumani',
@@ -116,3 +115,25 @@ regions = [
                       'Yunusobod tumani', 'Yakkasaroy tumani']
     }
 ]
+
+
+def get_region_name_by_id(region_id) -> str:
+    for region in regions:
+        if region['id'] == region_id:
+            return region['name']
+    else:
+        return ""
+
+
+def get_district_name_by_index(region_id, index) -> str:
+    for region in regions:
+        if region['id'] == region_id:
+            return region['districts'][index]
+
+    return ""
+
+
+CREATE_ROUTE = "🚕 Marshrut yaratish"
+PASSENGER = "👨 Yo'lovchi"
+DRIVER = "🚖 Haydovchi"
+ADD_CAR = "🚖 Mashina qo'shish"

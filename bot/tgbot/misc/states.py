@@ -13,3 +13,14 @@ class DriverRegistration(StatesGroup):
     Phone = State()
     CarModel = State()
     CarNumber = State()
+
+
+class RouteState(StatesGroup):
+    FromRegion = State()
+    FromDistrict = State()
+    ToRegion = State()
+    ToDistrict = State()
+    StartTime = State()
+    Seats = State()
+    Price = State()
+    Comment = State()
