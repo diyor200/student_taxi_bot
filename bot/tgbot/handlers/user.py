@@ -78,7 +78,7 @@ async def get_name(message: types.Message, state: FSMContext):
         await state.clear()
         return
 
-    await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=user_main_menu_keyboard())
+    await message.answer(text="✅Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=user_main_menu_keyboard())
     await state.clear()
 
 

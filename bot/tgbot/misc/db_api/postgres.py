@@ -95,16 +95,21 @@ class Database:
         sql = "SELECT * FROM directions where status = true;"
         return await self.execute(sql, fetch=True)
 
-    async def get_route(self, from_region_id, from_district_id, to_region_id, to_district_id):
+    async def get_route_by_region_district(self, from_region_id, from_district_id, to_region_id, to_district_id):
         sql = """select * from directions where from_region_id=$1
                            and from_district_id=$2 and to_region_id=$3 and to_district_id=$4 and status = true;"""
         return await self.execute(sql, from_region_id, from_district_id, to_region_id, to_district_id, fetch=True)
+
+    async def get_routes_by_region(self, from_region_id, to_region_id):
+        sql = """select * from directions where from_region_id=$1
+                           and to_region_id=$2 and status = true;"""
+        return await self.execute(sql, from_region_id, to_region_id, fetch=True)
 
     # user routes
     async def add_user_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                              start_time, seats, price, comment):
         sql = """insert into user_directions(user_id, direction_id, created_at, updated_at)
-                    values ($1, $1, now(), now()) returning id;"""
+                    values ($1, $2, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   start_time, seats, price, comment, fetchrow=True)
 

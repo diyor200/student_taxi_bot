@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from ..consts.consts import regions
+from ..consts.consts import regions, CANCEL_TEXT
 
 
 def get_regions_inline_keyboard() -> InlineKeyboardMarkup:
@@ -33,5 +33,12 @@ def write_to_driver_inline_button(text, link) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text=text, url=link))
     builder.adjust(1)
+
+    return builder.as_markup()
+
+
+def create_cancel_button(callback_data:str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text=CANCEL_TEXT, callback_data=callback_data))
 
     return builder.as_markup()

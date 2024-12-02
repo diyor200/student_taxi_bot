@@ -148,8 +148,9 @@ PERSONAL_ACCOUNT_CAR_INFO_FORM = "\n\nMashina haqida ma'lumot\nModel: {0}\nRaqam
 
 SEND_MESSAGE_VIA_TELERGAM_TEXT = "📤 Haydovchiga yozish"
 
-SEND_ROUTE_FORM = ("Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\nIzoh: {3}\n\nHaydovchi: {4}\nMashina rusumi: {5}\n"
-                   "Mashina raqami: {6}\nHaydovchi telefon raqami: {7}")
+SEND_ROUTE_FORM = ("Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\nNarxi: <b>{3}</b>\nQo'shimcha ma'lumot: {4}\n\nHaydovchi: {5}\nMashina rusumi: {6}\n"
+                   "Mashina raqami: {7}\nHaydovchi telefon raqami: {8}")
+ROUTE_SEARCH_INFO = "Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\n🔍Qidirilmoqda..."
 
 
 

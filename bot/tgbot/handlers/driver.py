@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import asyncpg
 
@@ -10,12 +10,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 from aiogram.types import ReplyKeyboardRemove
 
-from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE
-from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id
+from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE, SEND_ROUTE_FORM, get_region_name_by_id, \
+    get_district_name_by_index
+from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id, create_cancel_button
 from ..misc.states import DriverRegistration, RouteState
 from ..loader import db, config
 from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard, start_keyboard
-from ..services.broadcaster import broadcast
+from ..utils.common import get_route_date_range
 
 driver_router = Router()
 
@@ -130,13 +131,17 @@ async def get_name(message: types.Message, state: FSMContext):
             await state.clear()
             return
 
-    await message.answer(text="Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=driver_main_menu_keyboard())
+    await message.answer(text="✅Ro'yhatdan muvaffaqiyatli o'tdingiz!", reply_markup=driver_main_menu_keyboard())
     await state.clear()
 
 
 @driver_router.message(F.text == CREATE_ROUTE)
 async def begin_registration(message: types.Message, state: FSMContext):
-    await message.answer("Viloyatni tanlang:", reply_markup=get_regions_inline_keyboard())
+    sent_message = await message.answer("Qaysi viloyatdan:", reply_markup=get_regions_inline_keyboard())
+
+    await state.update_data({
+        "message_id": sent_message.message_id
+    })
     await state.set_state(RouteState.FromRegion)
 
 
@@ -144,11 +149,17 @@ async def begin_registration(message: types.Message, state: FSMContext):
 async def begin_registration(call: types.CallbackQuery, state: FSMContext):
     region_id = int(call.data)
 
+    data = await state.get_data()
+    message_id = data['message_id']
+
     await state.update_data({
         "from_region_id": region_id
     })
 
-    await call.message.answer("Tumanni tanlang:", reply_markup=get_districts_by_region_id(region_id))
+    await call.message.bot.edit_message_text(text="Qaysi tumanga:",
+                                             chat_id=call.from_user.id,
+                                             message_id=message_id,
+                                             reply_markup=get_districts_by_region_id(region_id))
     await state.set_state(RouteState.FromDistrict)
 
 
@@ -156,11 +167,17 @@ async def begin_registration(call: types.CallbackQuery, state: FSMContext):
 async def begin_registration(call: types.CallbackQuery, state: FSMContext):
     district_id = int(call.data)
 
+    data = await state.get_data()
+    message_id = data['message_id']
+
     await state.update_data({
         "from_district_id": district_id
     })
 
-    await call.message.answer("Viloyatni tanlang:", reply_markup=get_regions_inline_keyboard())
+    await call.message.bot.edit_message_text(text="Qaysi viloyatga:",
+                                             message_id=message_id,
+                                             chat_id=call.from_user.id,
+                                             reply_markup=get_regions_inline_keyboard())
     await state.set_state(RouteState.ToRegion)
 
 
@@ -168,11 +185,17 @@ async def begin_registration(call: types.CallbackQuery, state: FSMContext):
 async def begin_registration(call: types.CallbackQuery, state: FSMContext):
     region_id = int(call.data)
 
+    data = await state.get_data()
+    message_id = data['message_id']
+
     await state.update_data({
         "to_region_id": region_id
     })
 
-    await call.message.answer("Tumanni tanlang:", reply_markup=get_districts_by_region_id(region_id))
+    await call.message.bot.edit_message_text(text="Qaysi tumanga:",
+                                             message_id=message_id,
+                                             chat_id=call.from_user.id,
+                                             reply_markup=get_districts_by_region_id(region_id))
     await state.set_state(RouteState.ToDistrict)
 
 
@@ -180,18 +203,59 @@ async def begin_registration(call: types.CallbackQuery, state: FSMContext):
 async def begin_registration(call: types.CallbackQuery, state: FSMContext):
     to_district_id = int(call.data)
 
+    data = await state.get_data()
+    message_id = data['message_id']
+
     await state.update_data({
         "to_district_id": to_district_id
     })
 
-    await call.message.answer("Yurish vaqtini kiriting:\nMisol: <b>31.12.2024 08:00</b>",
-                              reply_markup=ReplyKeyboardRemove())
+    date_range = get_route_date_range()
+    await call.message.bot.edit_message_text(
+        text=f"Yurish sanasini kiriting:\nMisol: <b>{date_range[0].strftime('%d.%m.%Y')}</b>\n"
+             f"Eslatma: kiritilayotgan sana {date_range[0].strftime('%d.%m.%Y')}"
+             f" va {date_range[1].strftime('%d.%m.%Y')} oralig'ida bo'lishi kerak",
+        message_id=message_id,
+        chat_id=call.from_user.id,
+        reply_markup=None)
+    await state.set_state(RouteState.StartDate)
+
+
+@driver_router.message(RouteState.StartDate)
+async def begin_registration(message: types.Message, state: FSMContext):
+    try:
+        start_date = datetime.strptime(message.text, "%d.%m.%Y").date()
+        date_range = get_route_date_range()
+        if start_date < datetime.today().date() or start_date > datetime.today().date() + timedelta(days=3):
+            await message.answer(text=f"✖️ Noto'g'ri format, iltimos qaytadan kiriting:\nMisol: <b>31.12.2024</b>\n"
+                                      f"Eslatma: kiritilayotgan sana {date_range[0].strftime('%d.%m.%Y')}"
+                                      f" va {date_range[1].strftime('%d.%m.%Y')} oralig'ida bo'lishi kerak")
+            await state.set_state(RouteState.StartDate)
+            return
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer(text="✖️ Noto'g'ri format, iltimos qaytadan kiriting:")
+        await state.set_state(RouteState.StartDate)
+        return
+
+    await state.update_data({
+        "start_date": start_date
+    })
+
+    await message.answer("Yurish vaqtini kiriting:\nMisol: <b>08:00</b>",
+                         reply_markup=ReplyKeyboardRemove())
     await state.set_state(RouteState.StartTime)
 
 
 @driver_router.message(RouteState.StartTime)
 async def begin_registration(message: types.Message, state: FSMContext):
-    start_time = message.text
+    try:
+        start_time = datetime.strptime(message.text, "%H:%M").time()
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer(text="✖️ Noto'g'ri format, iltimos qaytadan kiriting:")
+        await state.set_state(RouteState.StartTime)
+        return
 
     await state.update_data({
         "start_time": start_time
@@ -204,7 +268,13 @@ async def begin_registration(message: types.Message, state: FSMContext):
 
 @driver_router.message(RouteState.Seats)
 async def begin_registration(message: types.Message, state: FSMContext):
-    seats = message.text
+    try:
+        seats = int(message.text)
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer(text="✖️ Noto'g'ri format, iltimos qaytadan kiriting:")
+        await state.set_state(RouteState.Seats)
+        return
 
     await state.update_data({
         "seats": seats
@@ -217,13 +287,19 @@ async def begin_registration(message: types.Message, state: FSMContext):
 
 @driver_router.message(RouteState.Price)
 async def begin_registration(message: types.Message, state: FSMContext):
-    price = message.text
+    try:
+        price = int(message.text)
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer(text="✖️ Noto'g'ri format, iltimos qaytadan kiriting:\nMisol: <b>20000</b>")
+        await state.set_state(RouteState.Price)
+        return
 
     await state.update_data({
         "price": price
     })
 
-    await message.answer("Izoh kiriting:\nMisol: <b>Andijon shahar Boburshox ko'chasi, Hamkorbank "
+    await message.answer("📄 Qo'shimcha ma'lumot kiriting:\nMisol: <b>Andijon shahar Boburshox ko'chasi, Hamkorbank "
                          "bosh office oldidan yuramiz</b>",
                          reply_markup=ReplyKeyboardRemove())
     await state.set_state(RouteState.Comment)
@@ -236,17 +312,44 @@ async def begin_registration(message: types.Message, state: FSMContext):
     from_district_id = int(data["from_district_id"])
     to_region_id = int(data["to_region_id"])
     to_district_id = int(data["to_district_id"])
-    start_time = datetime.strptime(data["start_time"], "%d.%m.%Y %H:%M")
-    seats = int(data["seats"])
-    price = int(data["price"])
+    start_date = data["start_date"]
+    start_time = datetime.combine(start_date, data["start_time"])
+    seats = data["seats"]
+    price = data["price"]
     comment = message.text
 
-    user = await db.get_user_by_telegram_id(message.from_user.id)
-    await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
-                       to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time,
-                       seats=seats,
-                       price=price, comment=comment)
+    await state.clear()
 
-    await message.answer("Muvaffaqiyatli yaratildi!",
+    user = await db.get_user_by_telegram_id(message.from_user.id)
+    route = await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
+                           to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time,
+                           seats=seats,
+                           price=price, comment=comment)
+    # except Exception as ex:
+    #     logging.error(ex)
+    #     await message.answer(text="✖️Ma'lumot yaratishda xatolik ro'y berdi, iltimos qaytadan urinib ko'ring")
+
+    car = await db.get_car_by_driver_id(user['id'])
+
+    # prepare vars
+    from_region_name = get_region_name_by_id(from_region_id)
+    from_district_name = get_district_name_by_index(from_region_id, from_district_id)
+    to_region_name = get_region_name_by_id(from_region_id)
+    to_district_name = get_district_name_by_index(to_region_id, to_district_id)
+
+    text = SEND_ROUTE_FORM.format(
+        from_region_name + " " + from_district_name,
+        to_region_name + " " + to_district_name,
+        start_time,
+        price,
+        comment,
+        user['name'] + " " + user['surname'],
+        car['model'],
+        car['number'],
+        user['phone'],
+        )
+
+    await message.answer(text=text, reply_markup=create_cancel_button(str(route['id'])))
+
+    await message.answer(text="✅Muvaffaqiyatli yaratildi!",
                          reply_markup=driver_main_menu_keyboard())
-    await state.set_state(RouteState.Price)

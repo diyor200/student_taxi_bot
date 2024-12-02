@@ -20,6 +20,7 @@ class RouteState(StatesGroup):
     FromDistrict = State()
     ToRegion = State()
     ToDistrict = State()
+    StartDate = State()
     StartTime = State()
     Seats = State()
     Price = State()
@@ -31,4 +32,5 @@ class RoutesState(StatesGroup):
     FromDistrict = State()
     ToRegion = State()
     ToDistrict = State()
+    Date = State()
     Next = State()

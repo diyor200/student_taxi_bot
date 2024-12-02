@@ -1,6 +1,6 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
-from ..consts.consts import ROUTES, NEXT_TEXT, CANCEL_TEXT
+from ..consts.consts import ROUTES, NEXT_TEXT, CANCEL_TEXT, CREATE_ROUTE
 
 
 def start_keyboard():
@@ -33,7 +33,7 @@ def driver_main_menu_keyboard() -> ReplyKeyboardMarkup:
     markup = ReplyKeyboardMarkup(keyboard=[[
         KeyboardButton(text=ROUTES),
         KeyboardButton(text="👤 Shaxsiy kabinet")],
-        [KeyboardButton(text="🚕 Marshrut yaratish")]
+        [KeyboardButton(text=CREATE_ROUTE)]
     ], resize_keyboard=True)
 
     return markup
