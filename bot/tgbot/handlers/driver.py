@@ -6,19 +6,30 @@ import asyncpg
 
 from aiogram import types
 from aiogram import Router, F
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 from aiogram.types import ReplyKeyboardRemove
 
 from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE, SEND_ROUTE_FORM, get_region_name_by_id, \
-    get_district_name_by_index
-from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id, create_cancel_button
+    get_district_name_by_index, DIRECTION_STATUS_ACTIVE, SEND_MESSAGE_VIA_TELERGAM_TEXT, GROUP_ID, DIRECTION_STATUS_TEXT
+from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id, create_cancel_button, \
+    write_to_driver_inline_button
 from ..misc.states import DriverRegistration, RouteState
 from ..loader import db, config
 from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard, start_keyboard
-from ..utils.common import get_route_date_range
+from ..utils.common import get_route_date_range, get_user_link
 
 driver_router = Router()
+
+
+@driver_router.message(Command('group'))
+async def begin_registration(message: types.Message, state: FSMContext):
+    print(f"{message.chat.id=}")
+    topic = message.message_thread_id
+
+    await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
+    await state.set_state(DriverRegistration.Name)
 
 
 # register
@@ -322,9 +333,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
 
     user = await db.get_user_by_telegram_id(message.from_user.id)
     route = await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
-                           to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time,
-                           seats=seats,
-                           price=price, comment=comment)
+                               to_region_id=to_region_id, to_district_id=to_district_id, start_time=start_time,
+                               seats=seats, price=price, comment=comment, status=DIRECTION_STATUS_ACTIVE)
     # except Exception as ex:
     #     logging.error(ex)
     #     await message.answer(text="✖️Ma'lumot yaratishda xatolik ro'y berdi, iltimos qaytadan urinib ko'ring")
@@ -347,7 +357,18 @@ async def begin_registration(message: types.Message, state: FSMContext):
         car['model'],
         car['number'],
         user['phone'],
-        )
+        DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE]
+    )
+
+    # send to topic
+    topic = await db.get_topic_by_region_id(from_region_id)
+    await message.bot.send_message(
+        chat_id=GROUP_ID,
+        message_thread_id=topic['topic_id'],
+        text=text,
+        reply_markup=write_to_driver_inline_button(text=SEND_MESSAGE_VIA_TELERGAM_TEXT,
+                                                   link=get_user_link(message.from_user.username, message.from_user.id))
+    )
 
     await message.answer(text=text, reply_markup=create_cancel_button(str(route['id'])))
 

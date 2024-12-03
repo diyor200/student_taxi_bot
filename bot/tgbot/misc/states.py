@@ -27,6 +27,12 @@ class RouteState(StatesGroup):
     Comment = State()
 
 
+# Topic
+class CreateTopic(StatesGroup):
+    Name = State()
+    Region = State()
+
+
 class RoutesState(StatesGroup):
     FromRegion = State()
     FromDistrict = State()

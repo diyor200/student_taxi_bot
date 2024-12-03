@@ -84,12 +84,12 @@ class Database:
 
     # routes
     async def add_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, start_time,
-                        seats, price, comment):
+                        seats, price, comment, status):
         sql = """insert into directions(driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                     start_time, seats, price, comment, status, created_at, updated_at)
-                 values($1, $2, $3, $4, $5, $6, $7, $8, $9, true, now(), now()) returning id;"""
+                 values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
-                                  start_time, seats, price, comment, fetchrow=True)
+                                  start_time, seats, price, comment, status, fetchrow=True)
 
     async def get_all_routes(self):
         sql = "SELECT * FROM directions where status = true;"
@@ -112,5 +112,14 @@ class Database:
                     values ($1, $2, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   start_time, seats, price, comment, fetchrow=True)
+
+    # topics
+    async def add_topic(self, region_id, topic_id, name):
+        sql = """insert into topics(region_id, topic_id, name) values ($1, $2, $3) returning id;"""
+        return await self.execute(sql, region_id, topic_id, name, fetchrow=True)
+
+    async def get_topic_by_region_id(self, region_id):
+        sql = "select * from topics where region_id=$1"
+        return await self.execute(sql, region_id, fetchrow=True)
 
 

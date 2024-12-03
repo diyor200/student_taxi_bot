@@ -11,7 +11,8 @@ from aiogram.enums.content_type import ContentType
 from aiogram.types import ReplyKeyboardRemove
 
 from ..consts.consts import (ROUTES, USER_TYPE, SEND_ROUTE_FORM, get_region_name_by_id, get_district_name_by_index,
-                             SEND_MESSAGE_VIA_TELERGAM_TEXT, CANCEL_TEXT, NEXT_TEXT, ROUTE_SEARCH_INFO)
+                             SEND_MESSAGE_VIA_TELERGAM_TEXT, CANCEL_TEXT, NEXT_TEXT, ROUTE_SEARCH_INFO,
+                             DIRECTION_STATUS_TEXT)
 from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id, write_to_driver_inline_button
 from ..misc.states import RoutesState
 from ..utils.common import get_user_link, get_route_date_range
@@ -144,17 +145,11 @@ async def begin_registration(message: types.Message, state: FSMContext):
     region_routes = await db.get_routes_by_region(from_region_id, to_region_id)
     region_district_routes = await db.get_route_by_region_district(from_region_id, from_district_id, to_region_id,
                                                                    to_district_id)
-    print(region_routes)
-    print(region_district_routes)
     for i in region_district_routes:
         if i in region_routes:
-            print(i)
             region_routes.remove(i)
 
     available_routes = region_district_routes + region_routes
-    print(f"{region_routes=}")
-    print(f"{available_routes=}")
-
 
     await message.answer(text=search_info)
 
@@ -164,8 +159,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
         markup = driver_main_menu_keyboard()
 
     if len(available_routes) < 1:
-        await message.answer("🤷‍♂️ Marshrutlar topilmadi", reply_markup=markup)
         await state.clear()
+        await message.answer("🤷‍♂️ Marshrutlar topilmadi", reply_markup=markup)
         return
     elif len(available_routes) >= 1:  # this is because we send only 5 datas at once
         if len(available_routes) <= 5:
@@ -199,6 +194,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
                 car['model'],
                 car['number'],
                 driver['phone'],
+                DIRECTION_STATUS_TEXT[available_routes[i]['status']]
             )
 
             # create send message to user inline button
@@ -267,6 +263,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
             car['model'],
             car['number'],
             driver['phone'],
+            DIRECTION_STATUS_TEXT[available_routes[i]['status']]
         )
 
         # create send message to user inline button

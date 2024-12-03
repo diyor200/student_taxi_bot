@@ -79,7 +79,7 @@ class Direction(models.Model):
     seats = models.SmallIntegerField()
     price = models.BigIntegerField()
     comment = models.CharField(max_length=500, default="")
-    status = models.BooleanField(default=True)
+    status = models.SmallIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -129,3 +129,13 @@ class DirectionComment(models.Model):
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class Topic(models.Model):
+    region_id = models.SmallIntegerField(default=0)
+    topic_id = models.BigIntegerField()
+    name = models.CharField(max_length=300, unique='')
+
+    class Meta:
+        ordering = ['name']
+        db_table = "topics"

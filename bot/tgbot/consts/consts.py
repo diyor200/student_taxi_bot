@@ -149,8 +149,19 @@ PERSONAL_ACCOUNT_CAR_INFO_FORM = "\n\nMashina haqida ma'lumot\nModel: {0}\nRaqam
 SEND_MESSAGE_VIA_TELERGAM_TEXT = "📤 Haydovchiga yozish"
 
 SEND_ROUTE_FORM = ("Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\nNarxi: <b>{3}</b>\nQo'shimcha ma'lumot: {4}\n\nHaydovchi: {5}\nMashina rusumi: {6}\n"
-                   "Mashina raqami: {7}\nHaydovchi telefon raqami: {8}")
+                   "Mashina raqami: {7}\nHaydovchi telefon raqami: {8}\nHolati: {9}")
 ROUTE_SEARCH_INFO = "Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\n🔍Qidirilmoqda..."
 
+DIRECTION_STATUS_ACTIVE = 1
+DIRECTION_STATUS_FULL = 2
+DIRECTION_STATUS_CANCEL = 3
 
+DIRECTION_STATUS_TEXT = {
+    1: "aktiv",
+    2: "to'ldi",
+    3: "bekor qilindi"
+}
 
+CREATE_TOPIC = 'create_topic'
+
+GROUP_ID = -1002467972630
