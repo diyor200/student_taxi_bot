@@ -80,6 +80,7 @@ class Direction(models.Model):
     price = models.BigIntegerField()
     comment = models.CharField(max_length=500, default="")
     status = models.SmallIntegerField(default=1)
+    message_id = models.BigIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

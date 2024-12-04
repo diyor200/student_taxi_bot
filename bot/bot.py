@@ -13,13 +13,15 @@ from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram import Dispatcher, Bot, types
 from pydantic import BaseModel
 
+from tgbot.consts.consts import get_region_name_by_id, get_district_name_by_index, SEND_ROUTE_FORM, \
+    DIRECTION_STATUS_TEXT, GROUP_ID
 from tgbot.config import load_config, Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
 from tgbot.middlewares.check_sub import CheckSubscription
 from tgbot.loader import db, config
 from tgbot.services import broadcaster
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI
 
 
@@ -183,18 +185,80 @@ register_global_middlewares(dp, config)
 #     await bot.session.close()
 #     return
 
+async def run_bot(tgbot: Bot):
+    # session = AiohttpSession(proxy="http://172.25.113.50:8085")
+    await on_startup(tgbot, config.tg_bot.admin_ids)
+    if await tgbot.get_webhook_info():
+        await tgbot.delete_webhook()
+
+    await dp.start_polling(tgbot)
+
+
+async def schedular(tgbot: Bot):
+    while True:
+        now = datetime.now()
+        target_time = now.replace(hour=1, minute=0, second=0, microsecond=0)
+
+        # If target time is in the past today, schedule it for tomorrow
+        if target_time <= now:
+            target_time += timedelta(days=1)
+
+        # Calculate sleep duration until target time
+        wait_time = (target_time - now).total_seconds()
+        logging.info(f"[{now}] Waiting for {wait_time} seconds until {target_time}...")
+        # await asyncio.sleep(wait_time)  # Sleep until the scheduled time
+        await asyncio.sleep(100)  # Sleep until the scheduled time
+
+        # Run the task
+        try:
+            # get expired ids
+            logging.info("getting ids to expire")
+            expired_ids = await db.get_expired_direction_message_ids_for_passive()
+            logging.info("changing statuses to passive ")
+            await db.passive_expired_directions()
+
+            for i in expired_ids:
+                from_region_name = get_region_name_by_id(i["from_region_id"])
+                from_district_name = get_district_name_by_index(i['from_region_id'], i['from_district_id'])
+                to_region_name = get_region_name_by_id(i['to_region_id'])
+                to_district_name = get_district_name_by_index(i['to_region_id'], i['to_district_id'])
+
+                text = SEND_ROUTE_FORM.format(
+                    from_region_name + " " + from_district_name,
+                    to_region_name + " " + to_district_name,
+                    i['start_time'],
+                    i['price'],
+                    i['comment'],
+                    i['name'] + " " + i['surname'],
+                    i['model'],
+                    i['number'],
+                    i['phone'],
+                    DIRECTION_STATUS_TEXT[3]
+                )
+
+                logging.info("editing message")
+                await tgbot.edit_message_text(
+                    chat_id=GROUP_ID,
+                    message_id=i['message_id'],
+                    text=text,
+                    reply_markup=None
+                )
+
+                logging.info("sending message to admin")
+                await asyncio.sleep(0.03)
+
+            await broadcaster.broadcast(tgbot, config.tg_bot.admin_ids, "Job run successfully!")
+        except Exception as ex:
+            logging.error(ex)
+
 
 async def main():
-    # session = AiohttpSession(proxy="http://172.25.113.50:8085")
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))#, session=session)
-    await on_startup(bot, config.tg_bot.admin_ids)
-    if await bot.get_webhook_info():
-        await bot.delete_webhook()
+    await asyncio.gather(run_bot(bot), schedular(bot))
 
-    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logging.error("Бот був вимкнений!")
+        logging.error("Bot o'chdi!")

@@ -83,13 +83,13 @@ class Database:
         return await self.execute(sql, driver_id, fetchrow=True)
 
     # routes
-    async def add_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, start_time,
-                        seats, price, comment, status):
+    async def add_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, message_id,
+                        start_time, seats, price, comment, status):
         sql = """insert into directions(driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
-                    start_time, seats, price, comment, status, created_at, updated_at)
-                 values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()) returning id;"""
+         message_id, start_time, seats, price, comment, status, created_at, updated_at)
+                 values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
-                                  start_time, seats, price, comment, status, fetchrow=True)
+                                  message_id, start_time, seats, price, comment, status, fetchrow=True)
 
     async def get_all_routes(self):
         sql = "SELECT * FROM directions where status = true;"
@@ -104,6 +104,37 @@ class Database:
         sql = """select * from directions where from_region_id=$1
                            and to_region_id=$2 and status = true;"""
         return await self.execute(sql, from_region_id, to_region_id, fetch=True)
+
+    async def get_expired_direction_message_ids_for_passive(self):
+        sql = ("""select
+                        d.message_id,
+                        d.from_region_id,
+                        d.from_district_id,
+                        d.to_region_id,
+                        d.to_district_id,
+                        d.start_time,
+                        d.price,
+                        d.comment,
+                        u.telegram_id,
+                        u.telegram_id,
+                        u.name,
+                        u.surname,
+                        u.phone,
+                        c.model,
+                        c.number,
+                        d.status
+                    from directions d join users u on d.driver_id=u.id join cars c on c.user_id=u.id
+                    where  d.created_at::date < now()::date and d.status = 1 and d.message_id > 0;
+        """)
+        return await self.execute(sql, fetch=True)
+
+    async def passive_expired_directions(self):
+        sql = "UPDATE directions SET status = 3 WHERE created_at::date < NOW()::date AND status = 1"
+        return await self.execute(sql, execute=True)
+
+    async def get_route_by_id(self, route_id):
+        sql = "select * from directions where id = $1"
+        return await self.execute(sql, route_id, fetchrow=True)
 
     # user routes
     async def add_user_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,

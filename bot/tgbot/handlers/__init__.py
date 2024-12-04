@@ -5,6 +5,7 @@ from .user import user_router
 from .start import start_router
 from .routes import routes_router
 from .personal_account import account_router
+from .inline import inline_router
 
 routers_list = [
     admin_router,
@@ -13,6 +14,7 @@ routers_list = [
     driver_router,
     routes_router,
     account_router,
+    inline_router,
 ]
 
 __all__ = [

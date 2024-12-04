@@ -179,7 +179,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
             from_region_name = get_region_name_by_id(available_routes[i]['from_region_id'])
             from_district_name = get_district_name_by_index(available_routes[i]['from_region_id'],
                                                             available_routes[i]['from_district_id'])
-            to_region_name = get_region_name_by_id(available_routes[i]['from_region_id'])
+            to_region_name = get_region_name_by_id(available_routes[i]['to_region_id'])
             to_district_name = get_district_name_by_index(available_routes[i]['to_region_id'],
                                                           available_routes[i]['to_district_id'])
 

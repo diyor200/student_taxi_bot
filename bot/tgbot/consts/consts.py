@@ -141,6 +141,7 @@ ROUTES = "🚕 Marshrutlar"
 
 NEXT_TEXT = "Keyingisi ➡️"
 CANCEL_TEXT = "Bekor qilish ✖️"
+FULL_TEXT = "To'ldi ✅"
 
 PERSONAL_ACCOUNT_TEXT = '👤 Shaxsiy kabinet'
 PERSONAL_ACCOUNT_INFO_FORM = "Ism: {0}\nFamilya: {1}\nTelefon raqam: {2}\nStatus: {3}"
