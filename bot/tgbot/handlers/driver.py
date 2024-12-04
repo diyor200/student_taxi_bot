@@ -23,19 +23,11 @@ from ..utils.common import get_route_date_range, get_user_link
 driver_router = Router()
 
 
-@driver_router.message(Command('group'))
-async def begin_registration(message: types.Message, state: FSMContext):
-    print(f"{message.chat.id=}")
-    topic = message.message_thread_id
-
-    await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
-    await state.set_state(DriverRegistration.Name)
-
-
 # register
 @driver_router.message(F.text == DRIVER)
 async def begin_registration(message: types.Message, state: FSMContext):
     await message.answer("Ismingizni kiriting:", reply_markup=types.ReplyKeyboardRemove())
+    await state.clear()
     await state.set_state(DriverRegistration.Name)
 
 
@@ -150,6 +142,7 @@ async def get_name(message: types.Message, state: FSMContext):
 async def begin_registration(message: types.Message, state: FSMContext):
     sent_message = await message.answer("Qaysi viloyatdan:", reply_markup=get_regions_inline_keyboard())
 
+    await state.clear()
     await state.update_data({
         "message_id": sent_message.message_id
     })

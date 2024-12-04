@@ -5,6 +5,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 
+from ..keyboards.inline import change_user_info_by_type_keyboard, update_user_info_keyboard
 from ..misc.states import Registration, DriverRegistration
 from ..loader import db, config
 from ..keyboards.reply import phone_button, user_main_menu_keyboard, start_keyboard, driver_main_menu_keyboard
@@ -45,4 +46,39 @@ async def begin_registration(message: types.Message):
             car['number']
         )
 
-    await message.answer(text=text, reply_markup=markup)
+    sent_message = await message.answer(text=text)
+    await message.bot.edit_message_reply_markup(
+        message_id=sent_message.message_id,
+        chat_id=message.chat.id,
+        reply_markup=change_user_info_by_type_keyboard(user['type'], sent_message.message_id)
+    )
+
+
+async def begin_update_user(call: types.CallbackQuery, state: FSMContext):
+    text_parts = call.data.split(":")
+    if text_parts not in ['name', 'phone', 'surname']:
+        await call.message.answer(text="Nimani o'zgartirmoqchisiz:", reply_markup=update_user_info_keyboard())
+        return
+
+    name, surname, phone = None, None, None
+    if text_parts == 'name':
+        name = text_parts[1]
+    elif text_parts == 'phone':
+        phone = text_parts[1]
+    elif text_parts == 'surname':
+        surname = text_parts[1]
+    else:
+        await call.answer(text="Xatolik yuzaga keldi, qaytadan urinib ko'ring")
+        await state.clear()
+        return
+
+    try:
+        await db.update_user(name, surname, phone, call.from_user.id)
+        await call.bot.answer_callback_query(text="✅Muvaffaqiyatli o'zgartirildi",
+                                             callback_query_id=call.id,
+                                             show_alert=True)
+    except Exception as ex:
+        logging.error(ex)
+        await call.message.answer(text="Xatolik yuzaga keldi, qaytadan urinib ko'ring")
+        await state.clear()
+        return

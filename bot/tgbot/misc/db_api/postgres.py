@@ -72,6 +72,31 @@ class Database:
         sql = "UPDATE Users SET type=$1 WHERE telegram_id=$2"
         return await self.execute(sql, user_type, telegram_id, execute=True)
 
+    async def update_user(self, name=None, surname=None, phone=None, telegram_id):
+        count = 1
+        args = []
+        sql = "UPDATE Users SET "
+
+        if name is not None:
+            sql += f"name=${count}"
+            args.append(name)
+            count += 1
+
+        if surname is not None:
+            sql += f"surname=${count}"
+            args.append(surname)
+            count += 1
+
+        if phone is not None:
+            sql += f"phone=${count}"
+            args.append(phone)
+            count += 1
+
+        args.append(telegram_id)
+        sql += f" WHERE telegram_id=${count}"
+
+        return await self.execute(sql, args, execute=True)
+
     # cars
     async def add_car(self, user_id, car_model, car_number):
         sql = """insert into cars(user_id, model, number, created_at, updated_at)

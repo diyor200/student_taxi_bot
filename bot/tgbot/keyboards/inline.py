@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from ..consts.consts import regions, CANCEL_TEXT, FULL_TEXT
+from ..consts.consts import regions, CANCEL_TEXT, FULL_TEXT, DRIVER_TYPE
 
 
 def get_regions_inline_keyboard() -> InlineKeyboardMarkup:
@@ -37,11 +37,49 @@ def write_to_driver_inline_button(text, link) -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
-def create_cancel_full_button(callback_data:str) -> InlineKeyboardMarkup:
+def create_cancel_full_button(callback_data: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text=CANCEL_TEXT, callback_data=f"cancel_route:{callback_data}"),
         InlineKeyboardButton(text=FULL_TEXT, callback_data=f"full_route:{callback_data}"),
     )
+
+    return builder.as_markup()
+
+
+def change_user_info_by_type_keyboard(user_type, message_id) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(text="Foydalnuvchi ma'lumotlarini o'zgartirish", callback_data=f"change_user:{message_id}")
+    )
+
+    if user_type == DRIVER_TYPE:
+        builder.add(
+            InlineKeyboardButton(text="Mashina ma'lumotlarini o'zgartirish", callback_data=f"change_car:{message_id}")
+        )
+
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def update_user_info_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Ism", callback_data=f"update_user_info:name"),
+        InlineKeyboardButton(text="Familiya", callback_data=f"update_user_info:surname"),
+        InlineKeyboardButton(text="Telefron raqam", callback_data=f"update_user_info:phone"),
+    )
+    builder.adjust(1)
+
+    return builder.as_markup()
+
+
+def update_car_info_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Mashina modeli", callback_data=f"update_user_info:car_model"),
+        InlineKeyboardButton(text="Mashina raqami", callback_data=f"update_user_info:car_number"),
+    )
+    builder.adjust(1)
 
     return builder.as_markup()

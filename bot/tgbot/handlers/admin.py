@@ -19,6 +19,7 @@ admin_router.message.filter(AdminFilter())
 @admin_router.message(Command(CREATE_TOPIC))
 async def begin_registration(message: types.Message, state: FSMContext):
     await message.answer("Topic nomini kiriting:")
+    await state.clear()
     await state.set_state(CreateTopic.Name)
 
 

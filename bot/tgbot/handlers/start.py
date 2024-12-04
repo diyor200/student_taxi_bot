@@ -2,6 +2,7 @@ import logging
 
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, Update
 
 from ..consts.consts import DRIVER_TYPE
@@ -30,9 +31,10 @@ async def start(message: Message):
 
 
 @start_router.message(Command("help"))
-async def start_help(message: Message):
+async def start_help(message: Message, state: FSMContext):
     text = ("Buyruqlar: ",
             "/start - Botni ishga tushirish",
             "/help - Yordam",)
 
+    await state.clear()
     return await message.answer(text="\n".join(text))
