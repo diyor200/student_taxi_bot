@@ -164,6 +164,10 @@ DIRECTION_STATUS_TEXT = {
     3: "bekor qilindi"
 }
 
+# admin commands
 CREATE_TOPIC = 'create_topic'
+GET_DAILY_REPORT = 'get_daily_report'
+GET_MONTHLY_REPORT = 'get_monthly_report'
+HELP = 'help'
 
 GROUP_ID = -1002467972630

@@ -16,18 +16,19 @@ start_router = Router()
 async def start(message: Message):
     try:
         user = await db.get_user_by_telegram_id(message.from_user.id)
+        if user is not None:
+            if user["type"] == DRIVER_TYPE:
+                markup = driver_main_menu_keyboard
+            else:
+                markup = user_main_menu_keyboard
+            await message.reply("Assalomu alaykum! Botimizga xush kelibsiz",
+                                reply_markup=markup())
+            return
 
-        if user["type"] == DRIVER_TYPE:
-            markup = driver_main_menu_keyboard
-        else:
-            markup = user_main_menu_keyboard
-    except Exception as e:
         await message.reply("Assalomu alaykum botdan foydalanish uchun avval ro'yhatdan o'ting:",
                             reply_markup=start_keyboard())
-        return
-
-    await message.reply("Assalomu alaykum! Botimizga xush kelibsiz",
-                        reply_markup=markup())
+    except Exception as ex:
+        logging.error(ex)
 
 
 @start_router.message(Command("help"))

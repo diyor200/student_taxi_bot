@@ -135,8 +135,12 @@ class Database:
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   message_id, start_time, seats, price, comment, status, fetchrow=True)
 
-    async def get_all_routes(self):
-        sql = "SELECT * FROM directions where status = true;"
+    async def get_daily_routes(self):
+        sql = "SELECT * FROM directions where created_at::date = now()::date;"
+        return await self.execute(sql, fetch=True)
+
+    async def get_monthly_routes(self):
+        sql = "SELECT * FROM directions where created_at::date = now()::date;"
         return await self.execute(sql, fetch=True)
 
     async def get_route_by_region_district(self, from_region_id, from_district_id, to_region_id, to_district_id, date):
