@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, SwitchInlineQueryChosenChat
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from ..consts.consts import regions, CANCEL_TEXT, FULL_TEXT, DRIVER_TYPE
@@ -31,7 +31,11 @@ def get_districts_by_region_id(region_id) -> InlineKeyboardMarkup:
 
 def write_to_driver_inline_button(text, link) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text=text, url=link))
+    builder.row(InlineKeyboardButton(text=text, url=link,
+                                     switch_inline_query_chosen_chat=SwitchInlineQueryChosenChat(
+                                         query="kak dela",
+                                         allow_user_chats=True
+                                     )))
     builder.adjust(1)
 
     return builder.as_markup()
@@ -77,8 +81,8 @@ def update_user_info_keyboard() -> InlineKeyboardMarkup:
 def update_car_info_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.row(
-        InlineKeyboardButton(text="Mashina modeli", callback_data=f"update_user_info:car_model"),
-        InlineKeyboardButton(text="Mashina raqami", callback_data=f"update_user_info:car_number"),
+        InlineKeyboardButton(text="Mashina modeli", callback_data=f"update_car_info:car_model"),
+        InlineKeyboardButton(text="Mashina raqami", callback_data=f"update_car_info:car_number"),
     )
     builder.adjust(1)
 

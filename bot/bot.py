@@ -186,7 +186,6 @@ register_global_middlewares(dp, config)
 #     return
 
 async def run_bot(tgbot: Bot):
-    # session = AiohttpSession(proxy="http://172.25.113.50:8085")
     await on_startup(tgbot, config.tg_bot.admin_ids)
     if await tgbot.get_webhook_info():
         await tgbot.delete_webhook()
@@ -206,8 +205,7 @@ async def schedular(tgbot: Bot):
         # Calculate sleep duration until target time
         wait_time = (target_time - now).total_seconds()
         logging.info(f"[{now}] Waiting for {wait_time} seconds until {target_time}...")
-        # await asyncio.sleep(wait_time)  # Sleep until the scheduled time
-        await asyncio.sleep(100)  # Sleep until the scheduled time
+        await asyncio.sleep(wait_time)  # Sleep until the scheduled time
 
         # Run the task
         try:
@@ -253,7 +251,8 @@ async def schedular(tgbot: Bot):
 
 
 async def main():
-    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))#, session=session)
+    session = AiohttpSession(proxy="http://172.25.113.50:8085")
+    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'), session=session)
     await asyncio.gather(run_bot(bot), schedular(bot))
 
 

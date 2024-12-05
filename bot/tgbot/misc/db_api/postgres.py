@@ -72,10 +72,10 @@ class Database:
         sql = "UPDATE Users SET type=$1 WHERE telegram_id=$2"
         return await self.execute(sql, user_type, telegram_id, execute=True)
 
-    async def update_user(self, name=None, surname=None, phone=None, telegram_id):
+    async def update_user(self, name=None, surname=None, phone=None, telegram_id=0):
         count = 1
         args = []
-        sql = "UPDATE Users SET "
+        sql = "UPDATE users SET "
 
         if name is not None:
             sql += f"name=${count}"
@@ -92,10 +92,9 @@ class Database:
             args.append(phone)
             count += 1
 
-        args.append(telegram_id)
         sql += f" WHERE telegram_id=${count}"
 
-        return await self.execute(sql, args, execute=True)
+        return await self.execute(sql, *args, telegram_id, execute=True)
 
     # cars
     async def add_car(self, user_id, car_model, car_number):
@@ -106,6 +105,26 @@ class Database:
     async def get_car_by_driver_id(self, driver_id):
         sql = "select * from cars where user_id = $1 limit 1"
         return await self.execute(sql, driver_id, fetchrow=True)
+
+    async def update_car(self, car_model=None, car_number=None, telegram_id=0):
+        count = 1
+        args = []
+        sql = "UPDATE cars SET "
+
+        if car_model is not None:
+            sql += f"model=${count}"
+            args.append(car_model)
+            count += 1
+
+        if car_number is not None:
+            sql += f"number=${count}"
+            args.append(car_number)
+            count += 1
+
+        args.append(telegram_id)
+        sql += f" WHERE user_id=(select id from users where telegram_id = ${count})"
+
+        return await self.execute(sql, *args, execute=True)
 
     # routes
     async def add_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id, message_id,
@@ -120,15 +139,16 @@ class Database:
         sql = "SELECT * FROM directions where status = true;"
         return await self.execute(sql, fetch=True)
 
-    async def get_route_by_region_district(self, from_region_id, from_district_id, to_region_id, to_district_id):
+    async def get_route_by_region_district(self, from_region_id, from_district_id, to_region_id, to_district_id, date):
         sql = """select * from directions where from_region_id=$1
-                           and from_district_id=$2 and to_region_id=$3 and to_district_id=$4 and status = true;"""
-        return await self.execute(sql, from_region_id, from_district_id, to_region_id, to_district_id, fetch=True)
+                           and from_district_id=$2 and to_region_id=$3 and to_district_id=$4 and status = 1 
+                           and created_at::date=$5 order by start_time;"""
+        return await self.execute(sql, from_region_id, from_district_id, to_region_id, to_district_id, date, fetch=True)
 
-    async def get_routes_by_region(self, from_region_id, to_region_id):
+    async def get_routes_by_region(self, from_region_id, to_region_id, date):
         sql = """select * from directions where from_region_id=$1
-                           and to_region_id=$2 and status = true;"""
-        return await self.execute(sql, from_region_id, to_region_id, fetch=True)
+                           and to_region_id=$2 and status = 1 and created_at::date=$3 order by start_time;;"""
+        return await self.execute(sql, from_region_id, to_region_id, date, fetch=True)
 
     async def get_expired_direction_message_ids_for_passive(self):
         sql = ("""select

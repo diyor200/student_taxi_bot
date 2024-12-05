@@ -11,7 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 from aiogram.types import ReplyKeyboardRemove
 
-from .personal_account import begin_update_user
+from .personal_account import begin_update_user, begin_update_car
 from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE, SEND_ROUTE_FORM, get_region_name_by_id, \
     get_district_name_by_index, DIRECTION_STATUS_ACTIVE, SEND_MESSAGE_VIA_TELERGAM_TEXT, GROUP_ID, DIRECTION_STATUS_TEXT
 from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id, create_cancel_full_button, \
@@ -72,10 +72,12 @@ async def begin_registration(call: types.CallbackQuery, state: FSMContext):
         case 'change_user':
             message_id = int(text_parts[1])
             await call.bot.delete_message(chat_id=call.from_user.id, message_id=message_id)
-            await begin_update_user(call, state)
+            await begin_update_user(call, state, call.message.message_id)
         case 'change_car':
             message_id = int(text_parts[1])
             await call.bot.delete_message(chat_id=call.from_user.id, message_id=message_id)
+            await begin_update_car(call, state, call.message.message_id)
         case 'update_user_info':
-            await begin_update_user(call, state)
+            await begin_update_user(call, state, call.message.message_id)
         case 'update_car_info':
+            await begin_update_car(call, state, call.message.message_id)

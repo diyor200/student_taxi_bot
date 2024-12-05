@@ -142,9 +142,9 @@ async def begin_registration(message: types.Message, state: FSMContext):
                                            )
 
     user = await db.get_user_by_telegram_id(message.from_user.id)
-    region_routes = await db.get_routes_by_region(from_region_id, to_region_id)
+    region_routes = await db.get_routes_by_region(from_region_id, to_region_id, date)
     region_district_routes = await db.get_route_by_region_district(from_region_id, from_district_id, to_region_id,
-                                                                   to_district_id)
+                                                                   to_district_id, date)
     for i in region_district_routes:
         if i in region_routes:
             region_routes.remove(i)

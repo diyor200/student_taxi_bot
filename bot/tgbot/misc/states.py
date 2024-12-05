@@ -40,3 +40,10 @@ class RoutesState(StatesGroup):
     ToDistrict = State()
     Date = State()
     Next = State()
+
+
+class UpdateUserData(StatesGroup):
+    Field = State()
+
+class UpdateCarData(StatesGroup):
+    Field = State()
