@@ -138,6 +138,7 @@ PASSENGER = "👨 Yo'lovchi"
 DRIVER = "🚖 Haydovchi"
 ADD_CAR = "🚖 Mashina qo'shish"
 ROUTES = "🚕 Marshrutlar"
+MY_ROUTES = "🧳Mening marshrutlarim"
 
 NEXT_TEXT = "Keyingisi ➡️"
 CANCEL_TEXT = "Bekor qilish ✖️"

@@ -84,9 +84,18 @@ async def get_name(message: types.Message, state: FSMContext):
 
 @user_router.message(F.text == ADD_CAR)
 async def add_car(message: types.Message, state: FSMContext):
-    await message.answer("Mashina modelini kiriting:", reply_markup=types.ReplyKeyboardRemove())
+    try:
+        user = await db.get_user_by_telegram_id(message.from_user.id)
+        car = await db.get_car_by_driver_id(user['id'])
+        if car is None:
+            await state.update_data({
+                "only_card_add": True
+            })
+            await state.set_state(DriverRegistration.CarModel)
 
-    await state.update_data({
-        "only_card_add": True
-    })
-    await state.set_state(DriverRegistration.CarModel)
+            await message.answer("Mashina modelini kiriting:", reply_markup=types.ReplyKeyboardRemove())
+        else:
+            await message.answer("Birdan ortiq avtomobil qo'sha olmaysiz")
+    except Exception as e:
+        logging.error(e)
+        await message.answer(text="Xatolik yuzaga keldi")

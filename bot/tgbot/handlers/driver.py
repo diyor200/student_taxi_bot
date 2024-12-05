@@ -12,7 +12,8 @@ from aiogram.enums.content_type import ContentType
 from aiogram.types import ReplyKeyboardRemove
 
 from ..consts.consts import DRIVER_TYPE, DRIVER, CREATE_ROUTE, SEND_ROUTE_FORM, get_region_name_by_id, \
-    get_district_name_by_index, DIRECTION_STATUS_ACTIVE, SEND_MESSAGE_VIA_TELERGAM_TEXT, GROUP_ID, DIRECTION_STATUS_TEXT
+    get_district_name_by_index, DIRECTION_STATUS_ACTIVE, SEND_MESSAGE_VIA_TELERGAM_TEXT, GROUP_ID, \
+    DIRECTION_STATUS_TEXT, MY_ROUTES
 from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_region_id, create_cancel_full_button, \
     write_to_driver_inline_button
 from ..misc.states import DriverRegistration, RouteState
@@ -140,13 +141,24 @@ async def get_name(message: types.Message, state: FSMContext):
 
 @driver_router.message(F.text == CREATE_ROUTE)
 async def begin_registration(message: types.Message, state: FSMContext):
-    sent_message = await message.answer("Qaysi viloyatdan:", reply_markup=get_regions_inline_keyboard())
+    try:
+        user = await db.get_user_by_telegram_id(telegram_id=message.from_user.id)
+        route = await db.get_active_route_by_user_id(user['id'])
+        if route is None:
+            sent_message = await message.answer("Qaysi viloyatdan:", reply_markup=get_regions_inline_keyboard())
 
-    await state.clear()
-    await state.update_data({
-        "message_id": sent_message.message_id
-    })
-    await state.set_state(RouteState.FromRegion)
+            await state.clear()
+            await state.update_data({
+                "message_id": sent_message.message_id
+            })
+            await state.set_state(RouteState.FromRegion)
+        else:
+            await message.answer(text="Birdan ortiq faol marshrut yarata olmaysiz. Yaratish uchun avval faolini "
+                                      "bekor qilishingiz kerek.")
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer("Xatolik yuzaga keldi qaytadan urinib ko'ring")
+
 
 
 @driver_router.callback_query(RouteState.FromRegion)
@@ -335,7 +347,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
     # prepare vars
     from_region_name = get_region_name_by_id(from_region_id)
     from_district_name = get_district_name_by_index(from_region_id, from_district_id)
-    to_region_name = get_region_name_by_id(from_region_id)
+    to_region_name = get_region_name_by_id(to_region_id)
     to_district_name = get_district_name_by_index(to_region_id, to_district_id)
 
     text = SEND_ROUTE_FORM.format(
@@ -370,3 +382,39 @@ async def begin_registration(message: types.Message, state: FSMContext):
 
     await message.answer(text="✅Muvaffaqiyatli yaratildi!",
                          reply_markup=driver_main_menu_keyboard())
+
+
+@driver_router.message(F.text == MY_ROUTES)
+async def begin_registration(message: types.Message, state: FSMContext):
+    try:
+        user = await db.get_user_by_telegram_id(message.from_user.id)
+        active_route = await db.get_active_route_by_user_id(user['id'])
+        if active_route is None:
+            await message.answer(text="🤷‍♂️ Sizda aktiv marshrut mavjud emas")
+        else:
+            car = await db.get_car_by_driver_id(user['id'])
+
+            # prepare vars
+            from_region_name = get_region_name_by_id(active_route['from_region_id'])
+            from_district_name = get_district_name_by_index(active_route['from_region_id'],
+                                                            active_route['from_district_id'])
+            to_region_name = get_region_name_by_id(active_route['to_region_id'])
+            to_district_name = get_district_name_by_index(active_route['to_region_id'], active_route['to_district_id'])
+
+            text = SEND_ROUTE_FORM.format(
+                from_region_name + " " + from_district_name,
+                to_region_name + " " + to_district_name,
+                active_route['start_time'],
+                active_route['price'],
+                active_route['comment'],
+                user['name'] + " " + user['surname'],
+                car['model'],
+                car['number'],
+                user['phone'],
+                DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE]
+            )
+
+            await message.answer(text=text, reply_markup=create_cancel_full_button(f"{active_route['id']}"))
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer(text="Xatolik yuzaga keldi, keyinroq qaytadan urinib ko'ring")

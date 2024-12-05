@@ -181,6 +181,10 @@ class Database:
         sql = "select * from directions where id = $1"
         return await self.execute(sql, route_id, fetchrow=True)
 
+    async def get_active_route_by_user_id(self, user_id):
+        sql = "select * from directions where driver_id = $1 and status = 1"
+        return await self.execute(sql, user_id, fetchrow=True)
+
     # user routes
     async def add_user_route(self, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                              start_time, seats, price, comment):
@@ -188,6 +192,10 @@ class Database:
                     values ($1, $2, now(), now()) returning id;"""
         return await self.execute(sql, driver_id, from_region_id, from_district_id, to_region_id, to_district_id,
                                   start_time, seats, price, comment, fetchrow=True)
+
+    async def update_direction_status(self, route_id, status: int):
+        sql = "UPDATE directions SET status = $1 WHERE id = $2"
+        return await self.execute(sql, status, route_id, execute=True)
 
     # topics
     async def add_topic(self, region_id, topic_id, name):
