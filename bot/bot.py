@@ -190,6 +190,7 @@ async def run_bot(tgbot: Bot):
     if await tgbot.get_webhook_info():
         await tgbot.delete_webhook()
 
+
     await dp.start_polling(tgbot)
 
 
@@ -252,7 +253,7 @@ async def schedular(tgbot: Bot):
 
 async def main():
     session = AiohttpSession(proxy="http://172.25.113.50:8085")
-    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'), session=session)
+    bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML')) #, session=session)
     await asyncio.gather(run_bot(bot), schedular(bot))
 
 

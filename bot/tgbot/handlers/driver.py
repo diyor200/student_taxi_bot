@@ -19,7 +19,7 @@ from ..keyboards.inline import get_regions_inline_keyboard, get_districts_by_reg
 from ..misc.states import DriverRegistration, RouteState
 from ..loader import db, config
 from ..keyboards.reply import phone_button, driver_main_menu_keyboard, user_main_menu_keyboard, start_keyboard
-from ..utils.common import get_route_date_range, get_user_link
+from ..utils.common import get_route_date_range, get_user_link, get_or_create_topic_id
 
 driver_router = Router()
 
@@ -143,8 +143,9 @@ async def get_name(message: types.Message, state: FSMContext):
 async def begin_registration(message: types.Message, state: FSMContext):
     try:
         user = await db.get_user_by_telegram_id(telegram_id=message.from_user.id)
-        route = await db.get_active_route_by_user_id(user['id'])
-        if route is None:
+        routes_count = await db.get_active_routes_count_by_user_id(user['id'])
+        print(routes_count)
+        if routes_count['count'] < 3:
             sent_message = await message.answer("Qaysi viloyatdan:", reply_markup=get_regions_inline_keyboard())
 
             await state.clear()
@@ -153,7 +154,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
             })
             await state.set_state(RouteState.FromRegion)
         else:
-            await message.answer(text="Birdan ortiq faol marshrut yarata olmaysiz. Yaratish uchun avval faolini "
+            await message.answer(text="Uchdan ortiq faol marshrut yarata olmaysiz. Yaratish uchun avval faolini "
                                       "bekor qilishingiz kerek.")
     except Exception as ex:
         logging.error(ex)
@@ -172,7 +173,7 @@ async def begin_registration(call: types.CallbackQuery, state: FSMContext):
         "from_region_id": region_id
     })
 
-    await call.message.bot.edit_message_text(text="Qaysi tumanga:",
+    await call.message.bot.edit_message_text(text="Qaysi tumandan:",
                                              chat_id=call.from_user.id,
                                              message_id=message_id,
                                              reply_markup=get_districts_by_region_id(region_id))
@@ -364,7 +365,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
     )
 
     # send to topic
-    topic = await db.get_topic_by_region_id(from_region_id)
+    topic = await get_or_create_topic_id(from_region_id, message.bot, db)
+    print(topic)
     sent_message = await message.bot.send_message(
         chat_id=GROUP_ID,
         message_thread_id=topic['topic_id'],
@@ -388,33 +390,34 @@ async def begin_registration(message: types.Message, state: FSMContext):
 async def begin_registration(message: types.Message, state: FSMContext):
     try:
         user = await db.get_user_by_telegram_id(message.from_user.id)
-        active_route = await db.get_active_route_by_user_id(user['id'])
-        if active_route is None:
+        active_routes = await db.get_active_route_by_user_id(user['id'])
+        if active_routes is None:
             await message.answer(text="🤷‍♂️ Sizda aktiv marshrut mavjud emas")
         else:
             car = await db.get_car_by_driver_id(user['id'])
 
+            for active_route in active_routes:
             # prepare vars
-            from_region_name = get_region_name_by_id(active_route['from_region_id'])
-            from_district_name = get_district_name_by_index(active_route['from_region_id'],
-                                                            active_route['from_district_id'])
-            to_region_name = get_region_name_by_id(active_route['to_region_id'])
-            to_district_name = get_district_name_by_index(active_route['to_region_id'], active_route['to_district_id'])
+                from_region_name = get_region_name_by_id(active_route['from_region_id'])
+                from_district_name = get_district_name_by_index(active_route['from_region_id'],
+                                                                active_route['from_district_id'])
+                to_region_name = get_region_name_by_id(active_route['to_region_id'])
+                to_district_name = get_district_name_by_index(active_route['to_region_id'], active_route['to_district_id'])
 
-            text = SEND_ROUTE_FORM.format(
-                from_region_name + " " + from_district_name,
-                to_region_name + " " + to_district_name,
-                active_route['start_time'],
-                active_route['price'],
-                active_route['comment'],
-                user['name'] + " " + user['surname'],
-                car['model'],
-                car['number'],
-                user['phone'],
-                DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE]
-            )
+                text = SEND_ROUTE_FORM.format(
+                    from_region_name + " " + from_district_name,
+                    to_region_name + " " + to_district_name,
+                    active_route['start_time'],
+                    active_route['price'],
+                    active_route['comment'],
+                    user['name'] + " " + user['surname'],
+                    car['model'],
+                    car['number'],
+                    user['phone'],
+                    DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE]
+                )
 
-            await message.answer(text=text, reply_markup=create_cancel_full_button(f"{active_route['id']}"))
+                await message.answer(text=text, reply_markup=create_cancel_full_button(f"{active_route['id']}"))
     except Exception as ex:
         logging.error(ex)
         await message.answer(text="Xatolik yuzaga keldi, keyinroq qaytadan urinib ko'ring")

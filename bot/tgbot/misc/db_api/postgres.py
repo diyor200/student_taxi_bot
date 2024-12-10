@@ -187,6 +187,10 @@ class Database:
 
     async def get_active_route_by_user_id(self, user_id):
         sql = "select * from directions where driver_id = $1 and status = 1"
+        return await self.execute(sql, user_id, fetch=True)
+
+    async def get_active_routes_count_by_user_id(self, user_id):
+        sql = "select count(*) from directions where driver_id = $1 and status = 1"
         return await self.execute(sql, user_id, fetchrow=True)
 
     # user routes
