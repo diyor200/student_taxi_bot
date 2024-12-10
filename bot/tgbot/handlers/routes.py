@@ -170,6 +170,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
             count = 5
             markup = next_cancel_keyboard()
 
+        bot = await message.bot.get_me()
+
         for i in range(count):
             # get driver and car from db
             driver = await db.get_user_by_id(available_routes[i]['driver_id'])
@@ -194,7 +196,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
                 car['model'],
                 car['number'],
                 driver['phone'],
-                DIRECTION_STATUS_TEXT[available_routes[i]['status']]
+                DIRECTION_STATUS_TEXT[available_routes[i]['status']],
+                f"@{bot.username}"
             )
 
             # create send message to user inline button
@@ -252,6 +255,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
         to_district_name = get_district_name_by_index(available_routes[i]['to_region_id'],
                                                       available_routes[i]['to_district_id'])
 
+        bot = await message.bot.get_me()
+
         # prepare sending text
         text = SEND_ROUTE_FORM.format(
             from_region_name + " " + from_district_name,
@@ -263,7 +268,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
             car['model'],
             car['number'],
             driver['phone'],
-            DIRECTION_STATUS_TEXT[available_routes[i]['status']]
+            DIRECTION_STATUS_TEXT[available_routes[i]['status']],
+            f"t.me/{bot.username}"
         )
 
         # create send message to user inline button

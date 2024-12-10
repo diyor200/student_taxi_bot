@@ -337,53 +337,56 @@ async def begin_registration(message: types.Message, state: FSMContext):
 
     await state.clear()
 
-    user = await db.get_user_by_telegram_id(message.from_user.id)
+    try:
+        user = await db.get_user_by_telegram_id(message.from_user.id)
 
-    # except Exception as ex:
-    #     logging.error(ex)
-    #     await message.answer(text="✖️Ma'lumot yaratishda xatolik ro'y berdi, iltimos qaytadan urinib ko'ring")
+        car = await db.get_car_by_driver_id(user['id'])
 
-    car = await db.get_car_by_driver_id(user['id'])
+        # prepare vars
+        from_region_name = get_region_name_by_id(from_region_id)
+        from_district_name = get_district_name_by_index(from_region_id, from_district_id)
+        to_region_name = get_region_name_by_id(to_region_id)
+        to_district_name = get_district_name_by_index(to_region_id, to_district_id)
+        bot = await message.bot.get_me()
 
-    # prepare vars
-    from_region_name = get_region_name_by_id(from_region_id)
-    from_district_name = get_district_name_by_index(from_region_id, from_district_id)
-    to_region_name = get_region_name_by_id(to_region_id)
-    to_district_name = get_district_name_by_index(to_region_id, to_district_id)
+        text = SEND_ROUTE_FORM.format(
+            from_region_name + " " + from_district_name,
+            to_region_name + " " + to_district_name,
+            start_time,
+            price,
+            comment,
+            user['name'] + " " + user['surname'],
+            car['model'],
+            car['number'],
+            user['phone'],
+            DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE],
+            f"@{bot.username}"
+        )
 
-    text = SEND_ROUTE_FORM.format(
-        from_region_name + " " + from_district_name,
-        to_region_name + " " + to_district_name,
-        start_time,
-        price,
-        comment,
-        user['name'] + " " + user['surname'],
-        car['model'],
-        car['number'],
-        user['phone'],
-        DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE]
-    )
+        # send to topic
+        topic = await get_or_create_topic_id(from_region_id, message.bot, db)
+        sent_message = await message.bot.send_message(
+            chat_id=GROUP_ID,
+            message_thread_id=topic['topic_id'],
+            text=text,
+            reply_markup=write_to_driver_inline_button(text=SEND_MESSAGE_VIA_TELERGAM_TEXT,
+                                                       link=get_user_link(message.from_user.username, message.from_user.id))
+        )
 
-    # send to topic
-    topic = await get_or_create_topic_id(from_region_id, message.bot, db)
-    print(topic)
-    sent_message = await message.bot.send_message(
-        chat_id=GROUP_ID,
-        message_thread_id=topic['topic_id'],
-        text=text,
-        reply_markup=write_to_driver_inline_button(text=SEND_MESSAGE_VIA_TELERGAM_TEXT,
-                                                   link=get_user_link(message.from_user.username, message.from_user.id))
-    )
+        route = await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
+                                   to_region_id=to_region_id, to_district_id=to_district_id,
+                                   message_id=sent_message.message_id,
+                                   start_time=start_time, seats=seats, price=price, comment=comment,
+                                   status=DIRECTION_STATUS_ACTIVE)
+        await message.answer(text=text, reply_markup=create_cancel_full_button(f"{route['id']}"))
 
-    route = await db.add_route(driver_id=user['id'], from_region_id=from_region_id, from_district_id=from_district_id,
-                               to_region_id=to_region_id, to_district_id=to_district_id,
-                               message_id=sent_message.message_id,
-                               start_time=start_time, seats=seats, price=price, comment=comment,
-                               status=DIRECTION_STATUS_ACTIVE)
-    await message.answer(text=text, reply_markup=create_cancel_full_button(f"{route['id']}"))
-
-    await message.answer(text="✅Muvaffaqiyatli yaratildi!",
-                         reply_markup=driver_main_menu_keyboard())
+        await message.answer(text="✅Muvaffaqiyatli yaratildi!",
+                            reply_markup=driver_main_menu_keyboard())
+    except Exception as ex:
+        logging.error(ex)
+        await message.answer("Xatolik yuzaga keldi iltimos qaytadan urinib ko'ring",
+                             reply_markup=driver_main_menu_keyboard())
+        await state.clear()
 
 
 @driver_router.message(F.text == MY_ROUTES)
@@ -395,6 +398,7 @@ async def begin_registration(message: types.Message, state: FSMContext):
             await message.answer(text="🤷‍♂️ Sizda aktiv marshrut mavjud emas")
         else:
             car = await db.get_car_by_driver_id(user['id'])
+            bot = await message.bot.get_me()
 
             for active_route in active_routes:
             # prepare vars
@@ -414,7 +418,8 @@ async def begin_registration(message: types.Message, state: FSMContext):
                     car['model'],
                     car['number'],
                     user['phone'],
-                    DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE]
+                    DIRECTION_STATUS_TEXT[DIRECTION_STATUS_ACTIVE],
+                    f"@{bot.username}"
                 )
 
                 await message.answer(text=text, reply_markup=create_cancel_full_button(f"{active_route['id']}"))

@@ -137,7 +137,7 @@ CREATE_ROUTE = "➕ Marshrut yaratish"
 PASSENGER = "👨 Yo'lovchi"
 DRIVER = "🚖 Haydovchi"
 ADD_CAR = "🚖 Mashina qo'shish"
-ROUTES = "🚕 Marshrutlar"
+ROUTES = "🚕 Marshrut qidirish"
 MY_ROUTES = "🧳Mening marshrutlarim"
 
 NEXT_TEXT = "Keyingisi ➡️"
@@ -151,7 +151,7 @@ PERSONAL_ACCOUNT_CAR_INFO_FORM = "\n\nMashina haqida ma'lumot\nModel: {0}\nRaqam
 SEND_MESSAGE_VIA_TELERGAM_TEXT = "📤 Haydovchiga yozish"
 
 SEND_ROUTE_FORM = ("Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\nNarxi: <b>{3}</b>\nQo'shimcha ma'lumot: {4}\n\nHaydovchi: {5}\nMashina rusumi: {6}\n"
-                   "Mashina raqami: {7}\nHaydovchi telefon raqami: {8}\nHolati: {9}")
+                   "Mashina raqami: {7}\nHaydovchi telefon raqami: {8}\nHolati: {9}\n{10}")
 ROUTE_SEARCH_INFO = "Qayerdan: {0}\nQayerga: {1}\nVaqt: {2}\n🔍Qidirilmoqda..."
 
 DIRECTION_STATUS_ACTIVE = 1

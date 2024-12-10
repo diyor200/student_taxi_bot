@@ -54,7 +54,7 @@ def create_cancel_full_button(callback_data: str) -> InlineKeyboardMarkup:
 def change_user_info_by_type_keyboard(user_type, message_id) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.add(
-        InlineKeyboardButton(text="Foydalnuvchi ma'lumotlarini o'zgartirish", callback_data=f"change_user:{message_id}")
+        InlineKeyboardButton(text="Foydalanuvchi ma'lumotlarini o'zgartirish", callback_data=f"change_user:{message_id}")
     )
 
     if user_type == DRIVER_TYPE:
@@ -71,7 +71,7 @@ def update_user_info_keyboard() -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(text="Ism", callback_data=f"update_user_info:name"),
         InlineKeyboardButton(text="Familiya", callback_data=f"update_user_info:surname"),
-        InlineKeyboardButton(text="Telefron raqam", callback_data=f"update_user_info:phone"),
+        InlineKeyboardButton(text="Telefon raqam", callback_data=f"update_user_info:phone"),
     )
     builder.adjust(1)
 
